@@ -62,3 +62,73 @@ export interface EvaluationResult {
   totalTests: number;
   results: CaseEvaluationResult[];
 }
+
+export type RunEnvironment = "LOCAL" | "CI" | "PROD";
+export type RunStatus = "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+
+export interface NamedTestCase extends TestCase {
+  name: string;
+}
+
+export interface RunPromptInput {
+  name: string;
+  versionA?: string | undefined;
+  versionB: string;
+}
+
+export interface CreateRunRequest {
+  commitSha: string;
+  environment: RunEnvironment;
+  threshold: number;
+  generationModel: ModelConfig;
+  judgeModel: ModelConfig;
+  prompts: RunPromptInput[];
+  testCases: NamedTestCase[];
+}
+
+export interface RunSummary {
+  id: string;
+  commitSha: string;
+  environment: RunEnvironment;
+  score: number | null;
+  status: RunStatus;
+  expectedJobs: number;
+  completedJobs: number;
+  failedJobs: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateRunResponse {
+  run: RunSummary;
+}
+
+export interface RunResultRecord {
+  id: string;
+  runId: string;
+  promptName: string;
+  testName: string;
+  pass: boolean;
+  driftScore: number;
+  reasoning: string;
+  latencyMs: number;
+  tokensUsed: number;
+  createdAt: string;
+}
+
+export interface PromptRunJobPayload {
+  runId: string;
+  prompt: RunPromptInput;
+  testCases: NamedTestCase[];
+  threshold: number;
+  generationModel: ModelConfig;
+  judgeModel: ModelConfig;
+}
+
+export type JudgeRunJobPayload = PromptRunJobPayload;
+
+export const QUEUE_NAMES = {
+  promptRun: "prompt-run",
+  judgeRun: "judge-run",
+  scoreRun: "score-run"
+} as const;

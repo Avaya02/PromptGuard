@@ -1,9 +1,7 @@
 import type { LLMProvider } from "@promptguard/llm-provider";
-import type { EvaluationResult, TestCase } from "@promptguard/shared-types";
+import type { EvaluationResult, NamedTestCase } from "@promptguard/shared-types";
 
-export interface EvaluationTestCase extends TestCase {
-  name: string;
-}
+export type EvaluationTestCase = NamedTestCase;
 
 export interface RunEvaluationInput {
   promptName: string;

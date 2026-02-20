@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RunEnvironment {
+  LOCAL
+  CI
+  PROD
+}
+
+enum RunStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Prompt {
+  id            String          @id @default(cuid())
+  name          String          @unique
+  latestVersion Int             @default(1) @map("latest_version")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  versions      PromptVersion[]
+
+  @@map("prompts")
+}
+
+model PromptVersion {
+  id        String   @id @default(cuid())
+  promptId  String   @map("prompt_id")
+  prompt    Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  commitSha String   @map("commit_sha")
+  content   String
+  hash      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([promptId])
+  @@map("prompt_versions")
+}
+
+model Run {
+  id            String         @id @default(cuid())
+  commitSha     String         @map("commit_sha")
+  environment   RunEnvironment
+  score         Float?
+  status        RunStatus      @default(PENDING)
+  expectedJobs  Int            @default(0) @map("expected_jobs")
+  completedJobs Int            @default(0) @map("completed_jobs")
+  failedJobs    Int            @default(0) @map("failed_jobs")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  results       Result[]
+
+  @@map("runs")
+}
+
+model Result {
+  id         String   @id @default(cuid())
+  runId      String   @map("run_id")
+  run        Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  promptName String   @map("prompt_name")
+  testName   String   @map("test_name")
+  pass       Boolean
+  driftScore Float    @map("drift_score")
+  reasoning  String
+  latencyMs  Int      @map("latency_ms")
+  tokensUsed Int      @map("tokens_used")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([runId])
+  @@index([promptName])
+  @@map("results")
+}
