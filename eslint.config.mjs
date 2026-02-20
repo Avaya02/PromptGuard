@@ -24,6 +24,7 @@ export default [
     },
     rules: {
       ...tseslintPlugin.configs.recommended.rules,
+      "no-undef": "off",
       "@typescript-eslint/consistent-type-imports": [
         "error",
         {

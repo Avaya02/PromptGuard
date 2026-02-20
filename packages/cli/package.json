@@ -1,0 +1,32 @@
+{
+  "name": "prompt-guard",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "bin": {
+    "prompt-guard": "dist/bin/prompt-guard.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@promptguard/evaluator": "workspace:*",
+    "@promptguard/llm-provider": "workspace:*",
+    "@promptguard/sdk": "workspace:*",
+    "@promptguard/shared-types": "workspace:*",
+    "chalk": "^5.4.1",
+    "execa": "^9.5.2",
+    "ora": "^8.2.0",
+    "typescript": "^5.9.3",
+    "yargs": "^17.7.2",
+    "zod": "^3.24.2"
+  }
+}

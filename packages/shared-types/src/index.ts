@@ -1,8 +1,8 @@
 export interface ModelConfig {
   provider: string;
   model: string;
-  baseUrl?: string;
-  apiKeyEnvVar?: string;
+  baseUrl?: string | undefined;
+  apiKeyEnvVar?: string | undefined;
 }
 
 export interface PromptGuardConfig {
@@ -32,18 +32,18 @@ export interface TestCases {
 
 export interface JudgeInput {
   input: string;
-  responseA?: string;
+  responseA?: string | undefined;
   responseB: string;
-  expect?: string | null;
+  expect?: string | null | undefined;
 }
 
 export interface JudgeResult {
   pass: boolean;
   reason: string;
   drift: number;
-  raw?: string;
-  latencyMs?: number;
-  tokensUsed?: number;
+  raw?: string | undefined;
+  latencyMs?: number | undefined;
+  tokensUsed?: number | undefined;
 }
 
 export interface CaseEvaluationResult {
