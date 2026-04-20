@@ -3,11 +3,13 @@ import type { FastifyInstance } from "fastify";
 import type {
   CreateRunResponse,
   PromptRunJobPayload,
-  RunResultRecord
+  RunViewResponse
 } from "@promptguard/shared-types";
 
 import { createRunRequestSchema, runIdParamsSchema } from "../schemas/runs.js";
+import { buildPromptDiffs } from "../utils/build-prompt-diffs.js";
 import { hashContent } from "../utils/hash.js";
+import { toRunResultRecords } from "../utils/to-run-results.js";
 import { toRunSummary } from "../utils/to-run-summary.js";
 
 export async function registerRunRoutes(app: FastifyInstance): Promise<void> {
@@ -113,18 +115,28 @@ export async function registerRunRoutes(app: FastifyInstance): Promise<void> {
       orderBy: [{ promptName: "asc" }, { testName: "asc" }]
     });
 
-    const response: RunResultRecord[] = results.map((result) => ({
-      id: result.id,
-      runId: result.runId,
-      promptName: result.promptName,
-      testName: result.testName,
-      pass: result.pass,
-      driftScore: result.driftScore,
-      reasoning: result.reasoning,
-      latencyMs: result.latencyMs,
-      tokensUsed: result.tokensUsed,
-      createdAt: result.createdAt.toISOString()
-    }));
+    return toRunResultRecords(results);
+  });
+
+  app.get("/runs/:id/view", async (request, reply) => {
+    const { id } = runIdParamsSchema.parse(request.params);
+
+    const run = await app.prisma.run.findUnique({ where: { id } });
+    if (!run) {
+      reply.status(404);
+      return { error: "Run not found" };
+    }
+
+    const results = await app.prisma.result.findMany({
+      where: { runId: id },
+      orderBy: [{ promptName: "asc" }, { testName: "asc" }]
+    });
+
+    const response: RunViewResponse = {
+      run: toRunSummary(run),
+      results: toRunResultRecords(results),
+      promptDiffs: await buildPromptDiffs(app.prisma, id, run.commitSha)
+    };
 
     return response;
   });

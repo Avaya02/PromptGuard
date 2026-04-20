@@ -1,0 +1,46 @@
+name: PromptGuard
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  semantic-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      PROMPTGUARD_API_URL: ${{ secrets.PROMPTGUARD_API_URL }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Build workspace
+        run: corepack pnpm -r build
+
+      - name: Run PromptGuard checks
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="origin/${{ github.base_ref }}"
+          else
+            BASE_REF="HEAD~1"
+          fi
+
+          corepack pnpm --filter prompt-guard exec prompt-guard test --base "$BASE_REF"

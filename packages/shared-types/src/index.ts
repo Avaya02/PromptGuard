@@ -116,6 +116,18 @@ export interface RunResultRecord {
   createdAt: string;
 }
 
+export interface PromptDiffRecord {
+  promptName: string;
+  before: string | null;
+  after: string;
+}
+
+export interface RunViewResponse {
+  run: RunSummary;
+  results: RunResultRecord[];
+  promptDiffs: PromptDiffRecord[];
+}
+
 export interface PromptRunJobPayload {
   runId: string;
   prompt: RunPromptInput;

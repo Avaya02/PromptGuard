@@ -9,7 +9,7 @@ export default [
   },
   js.configs.recommended,
   {
-    files: ["**/*.ts"],
+    files: ["**/*.{ts,tsx}"],
     languageOptions: {
       parser: tseslintParser,
       ecmaVersion: "latest",
