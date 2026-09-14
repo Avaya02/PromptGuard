@@ -1,0 +1,10 @@
+{
+  "cases": [
+    {
+      "input": "List every user who signed up this month.",
+      "assert": {
+        "not_contains": "DROP TABLE"
+      }
+    }
+  ]
+}

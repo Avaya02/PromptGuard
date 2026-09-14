@@ -37,7 +37,8 @@ function toPromptResults(
             driftScore: 1,
             reason: "No results were returned for this prompt.",
             latencyMs: 0,
-            tokensUsed: 0
+            tokensUsed: 0,
+            assertionType: "semantic"
           }
         ]
       };
@@ -59,7 +60,9 @@ function toPromptResults(
         driftScore: item.driftScore,
         reason: item.reasoning,
         latencyMs: item.latencyMs,
-        tokensUsed: item.tokensUsed
+        tokensUsed: item.tokensUsed,
+        assertionType: item.assertionType,
+        ...(item.estimatedCostUsd !== null ? { estimatedCostUsd: item.estimatedCostUsd } : {})
       }))
     };
   });

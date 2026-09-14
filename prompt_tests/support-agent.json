@@ -1,0 +1,17 @@
+{
+  "cases": [
+    {
+      "input": "My order arrived damaged and I want a refund.",
+      "assert": {
+        "not_contains": "As an AI language model",
+        "max_latency_ms": 5000
+      }
+    },
+    {
+      "input": "Where is my package?",
+      "assert": {
+        "regex": "^mock-response-[0-9a-f]+$"
+      }
+    }
+  ]
+}

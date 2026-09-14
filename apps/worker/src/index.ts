@@ -6,6 +6,7 @@ import { loadEnv } from "./env.js";
 import { prisma } from "./lib/prisma.js";
 import { createRedisConnection } from "./lib/redis.js";
 import { markPromptFailed } from "./services/finalize-run.js";
+import { startRunReconciler } from "./services/reconcile-runs.js";
 import { processJudgeRunJob } from "./workers/judge-run-worker.js";
 import { processPromptRunJob } from "./workers/prompt-run-worker.js";
 
@@ -48,10 +49,44 @@ async function start(): Promise<void> {
     void markPromptFailed(prisma, job.data.runId);
   });
 
+  // A stalled job is one whose worker died without releasing its lock. BullMQ
+  // reports the job id only, so the run id has to be read back from the queue.
+  // Without this the run's counter never reaches expectedJobs and it hangs.
+  const handleStalled = async (queue: Queue, jobId: string): Promise<void> => {
+    try {
+      const job = await queue.getJob(jobId);
+      const runId = job?.data?.runId;
+
+      if (typeof runId === "string" && runId.length > 0) {
+        await markPromptFailed(prisma, runId);
+      }
+    } catch (error) {
+      console.error(`Failed to reconcile stalled job ${jobId}:`, error);
+    }
+  };
+
+  const promptRunQueue = new Queue(QUEUE_NAMES.promptRun, { connection: redisConnection });
+
+  promptWorker.on("stalled", (jobId) => {
+    void handleStalled(promptRunQueue, jobId);
+  });
+
+  judgeWorker.on("stalled", (jobId) => {
+    void handleStalled(judgeRunQueue, jobId);
+  });
+
+  const stopReconciler = startRunReconciler(prisma, {
+    onError: (error) => {
+      console.error("Run reconciliation failed:", error);
+    }
+  });
+
   const shutdown = async (): Promise<void> => {
+    stopReconciler();
     await promptWorker.close();
     await judgeWorker.close();
     await judgeRunQueue.close();
+    await promptRunQueue.close();
     await prisma.$disconnect();
   };
 

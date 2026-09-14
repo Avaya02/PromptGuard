@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export interface ModelConfig {
   provider: string;
   model: string;
@@ -10,6 +12,8 @@ export interface PromptGuardConfig {
   testsDir: string;
   generationModel: ModelConfig;
   judgeModel: ModelConfig;
+  /** Max cases evaluated in parallel. Defaults to 5 when omitted. */
+  concurrency?: number | undefined;
 }
 
 export interface RegisteredPrompt {
@@ -21,14 +25,38 @@ export interface RegisteredPrompt {
   updatedAt: string;
 }
 
+/**
+ * Deterministic checks evaluated locally, before any model call.
+ *
+ * Every field is optional; a case may combine several. All present checks must
+ * pass for the case to proceed to the (paid) LLM judge.
+ */
+export const assertionSchema = z
+  .object({
+    contains: z.union([z.string(), z.array(z.string())]).optional(),
+    not_contains: z.union([z.string(), z.array(z.string())]).optional(),
+    regex: z.string().optional(),
+    json_schema: z.record(z.unknown()).optional(),
+    max_latency_ms: z.number().int().positive().optional()
+  })
+  .strict();
+
+export type Assertion = z.infer<typeof assertionSchema>;
+
 export interface TestCase {
   input: string;
-  expect: string | null;
+  /** LLM judge rubric. Null/absent means deterministic-only. */
+  expect?: string | null | undefined;
+  /** Deterministic, zero-token checks run before the judge. */
+  assert?: Assertion | undefined;
 }
 
 export interface TestCases {
   cases: TestCase[];
 }
+
+/** Which layer decided a case's outcome. */
+export type AssertionType = "deterministic" | "semantic";
 
 export interface JudgeInput {
   input: string;
@@ -44,6 +72,7 @@ export interface JudgeResult {
   raw?: string | undefined;
   latencyMs?: number | undefined;
   tokensUsed?: number | undefined;
+  estimatedCostUsd?: number | undefined;
 }
 
 export interface CaseEvaluationResult {
@@ -53,6 +82,12 @@ export interface CaseEvaluationResult {
   reason: string;
   latencyMs: number;
   tokensUsed: number;
+  /**
+   * "deterministic" when a local assertion decided the outcome (no model call
+   * was made); "semantic" when the LLM judge did.
+   */
+  assertionType: AssertionType;
+  estimatedCostUsd?: number | undefined;
 }
 
 export interface EvaluationResult {
@@ -113,6 +148,8 @@ export interface RunResultRecord {
   reasoning: string;
   latencyMs: number;
   tokensUsed: number;
+  assertionType: AssertionType;
+  estimatedCostUsd: number | null;
   createdAt: string;
 }
 

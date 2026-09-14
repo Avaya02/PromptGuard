@@ -44,7 +44,12 @@ export async function processJudgeRunJob(
         driftScore: caseResult.driftScore,
         reasoning: caseResult.reason,
         latencyMs: caseResult.latencyMs,
-        tokensUsed: caseResult.tokensUsed
+        tokensUsed: caseResult.tokensUsed,
+        assertionType:
+          caseResult.assertionType === "deterministic"
+            ? ("DETERMINISTIC" as const)
+            : ("SEMANTIC" as const),
+        estimatedCostUsd: caseResult.estimatedCostUsd ?? null
       }))
     });
   });

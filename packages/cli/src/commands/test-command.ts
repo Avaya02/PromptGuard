@@ -5,6 +5,7 @@ import ora from "ora";
 import { runLocalMode } from "./run-local-mode.js";
 import { runRemoteMode } from "./run-remote-mode.js";
 import { loadConfig } from "../config/load-config.js";
+import { PromptGuardCliError } from "../errors.js";
 import { loadBaselinePrompts } from "../prompts/load-baseline-prompts.js";
 import { loadCurrentPrompts } from "../prompts/load-current-prompts.js";
 import { printReport } from "../reporter/print-report.js";
@@ -65,6 +66,12 @@ export async function runTestCommand(args: TestCommandArgs): Promise<number> {
     const overallPass = promptResults.every((result) => result.pass);
     return overallPass ? 0 : 1;
   } catch (error) {
+    if (error instanceof PromptGuardCliError) {
+      spinner.fail(error.message);
+      console.error(`\n  ${error.hint}\n`);
+      return 1;
+    }
+
     spinner.fail(error instanceof Error ? error.message : "PromptGuard test run failed.");
     return 1;
   }

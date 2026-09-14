@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
-import * as monaco from "monaco-editor";
+// editor.api excludes every language contribution; importing "monaco-editor"
+// instead would pull ~80 language grammars into this chunk.
+import * as monaco from "monaco-editor/esm/vs/editor/editor.api.js";
 
 import { setupMonacoEnvironment } from "../../monaco/setup";
 
@@ -18,8 +20,8 @@ export function PromptDiffViewer({ before, after }: PromptDiffViewerProps): JSX.
       return;
     }
 
-    const originalModel = monaco.editor.createModel(before ?? "", "markdown");
-    const modifiedModel = monaco.editor.createModel(after, "markdown");
+    const originalModel = monaco.editor.createModel(before ?? "", "plaintext");
+    const modifiedModel = monaco.editor.createModel(after, "plaintext");
 
     const editor = monaco.editor.createDiffEditor(containerRef.current, {
       automaticLayout: true,

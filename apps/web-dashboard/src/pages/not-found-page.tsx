@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 
 import { EmptyState } from "../components/common/empty-state";
+import { usePageTitle } from "../hooks/use-page-title";
 
 export function NotFoundPage(): JSX.Element {
+  usePageTitle("Not found");
+
   return (
     <div className="space-y-4">
       <EmptyState

@@ -30,6 +30,8 @@ export const runResultRecordSchema = z.object({
   reasoning: z.string(),
   latencyMs: z.number().int().nonnegative(),
   tokensUsed: z.number().int().nonnegative(),
+  assertionType: z.enum(["deterministic", "semantic"]).default("semantic"),
+  estimatedCostUsd: z.number().nullable().default(null),
   createdAt: z.string()
 });
 

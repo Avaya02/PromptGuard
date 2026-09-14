@@ -1,6 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
-import { getPromptRuns, getPrompts, getRunResults, getRunView } from "../lib/api";
+import {
+  evaluatePrompt,
+  getPromptDetail,
+  getPromptRuns,
+  getPrompts,
+  getRunResults,
+  getRunView
+} from "../lib/api";
 
 export function usePrompts() {
   return useQuery({
@@ -35,4 +42,16 @@ export function useRunView(runId: string | undefined) {
       return status === "PENDING" || status === "RUNNING" ? 3000 : false;
     }
   });
+}
+
+export function usePromptDetail(promptId: string | undefined) {
+  return useQuery({
+    queryKey: ["prompt-detail", promptId],
+    queryFn: () => getPromptDetail(promptId ?? ""),
+    enabled: Boolean(promptId)
+  });
+}
+
+export function useEvaluate() {
+  return useMutation({ mutationFn: evaluatePrompt });
 }

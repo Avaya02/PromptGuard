@@ -18,6 +18,9 @@ export async function runLocalMode(context: TestModeContext): Promise<PromptEval
       threshold: context.config.threshold,
       generationProvider,
       judgeProvider,
+      ...(context.config.concurrency !== undefined
+        ? { concurrency: context.config.concurrency }
+        : {}),
       ...(baselinePrompt !== undefined ? { versionA: baselinePrompt } : {})
     });
 

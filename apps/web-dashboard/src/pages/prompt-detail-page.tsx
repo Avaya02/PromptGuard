@@ -2,14 +2,19 @@ import { Link, useParams } from "react-router-dom";
 
 import { DriftScoreChart } from "../components/charts/drift-score-chart";
 import { EmptyState } from "../components/common/empty-state";
+import { ErrorState } from "../components/common/error-state";
 import { LoadingState } from "../components/common/loading-state";
 import { Panel } from "../components/common/panel";
 import { usePromptRuns, usePrompts } from "../hooks/use-data";
+import { usePageTitle } from "../hooks/use-page-title";
 
 export function PromptDetailPage(): JSX.Element {
   const { promptId } = useParams();
   const promptsQuery = usePrompts();
   const runsQuery = usePromptRuns(promptId);
+  const promptName = promptsQuery.data?.find((item) => item.id === promptId)?.name;
+
+  usePageTitle(promptName ?? "Prompt");
 
   if (promptsQuery.isLoading || runsQuery.isLoading) {
     return <LoadingState />;
@@ -17,9 +22,18 @@ export function PromptDetailPage(): JSX.Element {
 
   if (promptsQuery.isError || runsQuery.isError || !promptId) {
     return (
-      <EmptyState
-        title="Unable to load prompt details"
-        description="The prompt could not be loaded from the current API connection."
+      <ErrorState
+        title="Could not load this prompt"
+        description="The prompt catalog or its run history failed to load."
+        steps={[
+          "Confirm the API server is running (GET /health should return status ok).",
+          "Check VITE_PROMPTGUARD_API_URL points at that server.",
+          "Reload the prompt list — this prompt may have been removed."
+        ]}
+        onRetry={() => {
+          void promptsQuery.refetch();
+          void runsQuery.refetch();
+        }}
       />
     );
   }
@@ -28,7 +42,12 @@ export function PromptDetailPage(): JSX.Element {
   const runs = runsQuery.data ?? [];
 
   if (!prompt) {
-    return <EmptyState title="Prompt not found" description="The selected prompt does not exist." />;
+    return (
+      <EmptyState
+        title="Prompt not found"
+        description="No prompt with this id is registered. It may have been deleted, or the link may be stale."
+      />
+    );
   }
 
   const chartData = runs

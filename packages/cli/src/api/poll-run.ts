@@ -14,11 +14,14 @@ function sleep(ms: number): Promise<void> {
   });
 }
 
+export const DEFAULT_POLL_INTERVAL_MS = 1500;
+
 export async function waitForRunCompletion(
   apiUrl: string,
   runId: string,
   spinner: Ora,
-  timeoutMs = 10 * 60 * 1000
+  timeoutMs = 10 * 60 * 1000,
+  pollIntervalMs = DEFAULT_POLL_INTERVAL_MS
 ): Promise<RunSummary> {
   const started = Date.now();
 
@@ -30,7 +33,7 @@ export async function waitForRunCompletion(
       return run;
     }
 
-    await sleep(1500);
+    await sleep(pollIntervalMs);
   }
 
   throw new Error(`Run polling timed out after ${timeoutMs}ms`);

@@ -6,6 +6,8 @@ import type { PromptGuardConfig } from "@promptguard/shared-types";
 import ts from "typescript";
 import { z } from "zod";
 
+import { PromptGuardCliError, isFileNotFound } from "../errors.js";
+
 const modelConfigSchema = z.object({
   provider: z.string().min(1),
   model: z.string().min(1),
@@ -17,12 +19,27 @@ const promptGuardConfigSchema = z.object({
   threshold: z.number().min(0).max(1),
   testsDir: z.string().min(1),
   generationModel: modelConfigSchema,
-  judgeModel: modelConfigSchema
+  judgeModel: modelConfigSchema,
+  concurrency: z.number().int().positive().optional()
 });
 
 export async function loadConfig(cwd: string): Promise<PromptGuardConfig> {
   const configPath = resolve(cwd, "promptguard.config.ts");
-  const source = await readFile(configPath, "utf-8");
+
+  let source: string;
+  try {
+    source = await readFile(configPath, "utf-8");
+  } catch (error) {
+    if (isFileNotFound(error)) {
+      throw new PromptGuardCliError(
+        "No promptguard.config.ts found in this directory.",
+        "Run `prompt-guard init` to create one."
+      );
+    }
+
+    throw error;
+  }
+
   const transpiled = ts.transpileModule(source, {
     compilerOptions: {
       module: ts.ModuleKind.ESNext,

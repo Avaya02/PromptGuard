@@ -12,10 +12,14 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src --ext .ts",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@promptguard/llm-provider": "workspace:*",
-    "@promptguard/shared-types": "workspace:*"
+    "@promptguard/shared-types": "workspace:*",
+    "ajv": "^8.20.0",
+    "p-limit": "^7.3.2"
   }
 }

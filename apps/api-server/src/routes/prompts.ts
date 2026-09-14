@@ -20,6 +20,39 @@ export async function registerPromptRoutes(app: FastifyInstance): Promise<void> 
     }));
   });
 
+  app.get("/prompts/:id", async (request, reply) => {
+    const { id } = promptIdParamsSchema.parse(request.params);
+
+    const prompt = await app.prisma.prompt.findUnique({
+      where: { id },
+      include: {
+        versions: {
+          orderBy: { createdAt: "desc" }
+        }
+      }
+    });
+
+    if (!prompt) {
+      reply.status(404);
+      return { error: "Prompt not found" };
+    }
+
+    return {
+      id: prompt.id,
+      name: prompt.name,
+      latestVersion: prompt.latestVersion,
+      createdAt: prompt.createdAt.toISOString(),
+      updatedAt: prompt.updatedAt.toISOString(),
+      versions: prompt.versions.map((version) => ({
+        id: version.id,
+        commitSha: version.commitSha,
+        content: version.content,
+        hash: version.hash,
+        createdAt: version.createdAt.toISOString()
+      }))
+    };
+  });
+
   app.get("/prompts/:id/runs", async (request, reply) => {
     const { id } = promptIdParamsSchema.parse(request.params);
 

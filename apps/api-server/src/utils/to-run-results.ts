@@ -10,6 +10,8 @@ interface ResultRow {
   reasoning: string;
   latencyMs: number;
   tokensUsed: number;
+  assertionType: "DETERMINISTIC" | "SEMANTIC";
+  estimatedCostUsd: number | null;
   createdAt: Date;
 }
 
@@ -24,6 +26,8 @@ export function toRunResultRecords(rows: ResultRow[]): RunResultRecord[] {
     reasoning: row.reasoning,
     latencyMs: row.latencyMs,
     tokensUsed: row.tokensUsed,
+    assertionType: row.assertionType === "DETERMINISTIC" ? "deterministic" : "semantic",
+    estimatedCostUsd: row.estimatedCostUsd,
     createdAt: row.createdAt.toISOString()
   }));
 }

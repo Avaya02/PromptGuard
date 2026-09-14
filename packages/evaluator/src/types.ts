@@ -11,6 +11,8 @@ export interface RunEvaluationInput {
   threshold: number;
   generationProvider: LLMProvider;
   judgeProvider: LLMProvider;
+  /** Max cases evaluated in parallel. Defaults to DEFAULT_CONCURRENCY (5). */
+  concurrency?: number;
 }
 
 export interface PromptEvaluationResult extends EvaluationResult {

@@ -1,9 +1,12 @@
 import { EmptyState } from "../components/common/empty-state";
+import { ErrorState } from "../components/common/error-state";
 import { LoadingState } from "../components/common/loading-state";
 import { PromptCard } from "../components/prompts/prompt-card";
 import { usePrompts } from "../hooks/use-data";
+import { usePageTitle } from "../hooks/use-page-title";
 
 export function PromptsListPage(): JSX.Element {
+  usePageTitle("Prompts");
   const promptsQuery = usePrompts();
 
   if (promptsQuery.isLoading) {
@@ -12,9 +15,15 @@ export function PromptsListPage(): JSX.Element {
 
   if (promptsQuery.isError) {
     return (
-      <EmptyState
-        title="Unable to load prompts"
-        description="Check the API server and VITE_PROMPTGUARD_API_URL configuration."
+      <ErrorState
+        title="Could not reach the API"
+        description="The dashboard asked the API for the prompt catalog and got no usable response."
+        steps={[
+          "Start the stack: docker compose up",
+          "Confirm the API answers: curl http://localhost:4000/health",
+          "If the API runs elsewhere, set VITE_PROMPTGUARD_API_URL and rebuild the dashboard."
+        ]}
+        onRetry={() => void promptsQuery.refetch()}
       />
     );
   }
@@ -24,8 +33,8 @@ export function PromptsListPage(): JSX.Element {
   if (prompts.length === 0) {
     return (
       <EmptyState
-        title="No prompts registered"
-        description="Run the SDK definePrompt flow and execute a test run to populate dashboard data."
+        title="No prompts registered yet"
+        description="Seed the demo data with `docker compose exec api-server pnpm seed`, or register a prompt from your own code with definePrompt() and run `prompt-guard test`."
       />
     );
   }

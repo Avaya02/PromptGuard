@@ -1,0 +1,20 @@
+{
+  "prompts": [
+    {
+      "name": "customer-support-agent",
+      "content": "You are a support agent for an e-commerce company. Acknowledge frustration, offer a concrete remedy, and never blame the customer.",
+      "hash": "04dca05e1ed4e14dbd38e2306cec69ec02a4d02fdd01e1ded4675bbb4e711842",
+      "version": 1,
+      "createdAt": "2026-09-14T08:45:31.009Z",
+      "updatedAt": "2026-09-14T08:45:31.009Z"
+    },
+    {
+      "name": "sql-query-generator",
+      "content": "Convert the request into a single PostgreSQL query. Return only SQL, no prose.",
+      "hash": "35f9651e55146a171ed4efc7984d01bf033662138d2c74db6e6c522491752898",
+      "version": 1,
+      "createdAt": "2026-09-14T08:45:31.009Z",
+      "updatedAt": "2026-09-14T08:45:31.009Z"
+    }
+  ]
+}

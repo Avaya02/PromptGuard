@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -13,6 +11,11 @@ services:
       - "5433:5432"
     volumes:
       - promptguard-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U promptguard -d promptguard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7-alpine
@@ -22,6 +25,61 @@ services:
       - "6379:6379"
     volumes:
       - promptguard-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api-server:
+    build:
+      context: .
+      dockerfile: apps/api-server/Dockerfile
+    container_name: promptguard-api
+    restart: unless-stopped
+    environment:
+      # Service names resolve on the compose network, so the internal port is
+      # 5432 even though the host maps it to 5433.
+      DATABASE_URL: postgresql://promptguard:promptguard@postgres:5432/promptguard?schema=public
+      REDIS_URL: redis://redis:6379
+      HOST: 0.0.0.0
+      PORT: "4000"
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    container_name: promptguard-worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://promptguard:promptguard@postgres:5432/promptguard?schema=public
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      # The API applies migrations on boot; the worker must not race it.
+      api-server:
+        condition: service_started
+
+  web-dashboard:
+    build:
+      context: .
+      dockerfile: apps/web-dashboard/Dockerfile
+    container_name: promptguard-web
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-server
 
 volumes:
   promptguard-postgres:
