@@ -29,7 +29,7 @@ describe("loadTestCases", () => {
 
       expect(error).toBeInstanceOf(PromptGuardCliError);
       expect((error as PromptGuardCliError).message).toContain("Test directory not found");
-      expect((error as PromptGuardCliError).hint).toContain("prompt-guard init");
+      expect((error as PromptGuardCliError).hint).toContain("promptguard init");
     });
 
     it("raises an actionable error for an empty directory", async () => {
@@ -113,6 +113,38 @@ describe("loadTestCases", () => {
 
       // Strict schema: a typo'd check must fail loudly rather than pass vacuously.
       await expect(loadTestCases(cwd, "prompt_tests")).rejects.toThrow(PromptGuardCliError);
+    });
+
+    it("uses a case's own name when given", async () => {
+      await writeTests("a.json", { cases: [{ name: "refund-flow", input: "x", expect: "y" }] });
+      expect((await loadTestCases(cwd, "prompt_tests"))[0]?.name).toBe("refund-flow");
+    });
+
+    it("applies a file-level prompt scope to every case", async () => {
+      await writeTests("a.json", {
+        prompts: "sql",
+        cases: [
+          { input: "one", expect: "r" },
+          { input: "two", expect: "r" }
+        ]
+      });
+
+      const cases = await loadTestCases(cwd, "prompt_tests");
+      expect(cases.map((c) => c.prompts)).toEqual([["sql"], ["sql"]]);
+    });
+
+    it("lets a case override the file scope", async () => {
+      await writeTests("a.json", {
+        prompts: ["sql"],
+        cases: [{ input: "one", expect: "r", prompts: ["support", "sql"] }]
+      });
+
+      expect((await loadTestCases(cwd, "prompt_tests"))[0]?.prompts).toEqual(["support", "sql"]);
+    });
+
+    it("leaves cases unscoped when no scope is given", async () => {
+      await writeTests("a.json", { cases: [{ input: "one", expect: "r" }] });
+      expect((await loadTestCases(cwd, "prompt_tests"))[0]?.prompts).toBeUndefined();
     });
 
     it("rejects an empty cases array", async () => {

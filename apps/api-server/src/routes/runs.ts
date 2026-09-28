@@ -1,9 +1,10 @@
 import type { FastifyInstance } from "fastify";
 
-import type {
-  CreateRunResponse,
-  PromptRunJobPayload,
-  RunViewResponse
+import {
+  selectCasesForPrompt,
+  type CreateRunResponse,
+  type PromptRunJobPayload,
+  type RunViewResponse
 } from "@promptguard/shared-types";
 
 import { createRunRequestSchema, listRunsQuerySchema, runIdParamsSchema } from "../schemas/runs.js";
@@ -91,7 +92,7 @@ export async function registerRunRoutes(app: FastifyInstance): Promise<void> {
       const jobPayload: PromptRunJobPayload = {
         runId: run.id,
         prompt,
-        testCases: payload.testCases,
+        testCases: selectCasesForPrompt(payload.testCases, prompt.name),
         threshold: payload.threshold,
         generationModel: payload.generationModel,
         judgeModel: payload.judgeModel

@@ -7,17 +7,25 @@ import { z } from "zod";
 
 import { PromptGuardCliError, isFileNotFound } from "../errors.js";
 
+const promptScopeSchema = z
+  .union([z.string().min(1), z.array(z.string().min(1)).min(1)])
+  .transform((value) => (Array.isArray(value) ? value : [value]));
+
 const testCaseSchema = z
   .object({
+    name: z.string().min(1).optional(),
     input: z.string().min(1),
     expect: z.string().min(1).nullable().optional(),
-    assert: assertionSchema.optional()
+    assert: assertionSchema.optional(),
+    prompts: promptScopeSchema.optional()
   })
   .refine((testCase) => testCase.expect != null || testCase.assert !== undefined, {
     message: "Each test case needs `expect` (LLM judge rubric) or `assert` (deterministic checks)."
   });
 
 const testFileSchema = z.object({
+  /** Scopes every case in the file to these prompts unless a case overrides it. */
+  prompts: promptScopeSchema.optional(),
   cases: z.array(testCaseSchema).min(1)
 });
 
@@ -31,7 +39,7 @@ export async function loadTestCases(cwd: string, testsDir: string): Promise<Eval
     if (isFileNotFound(error)) {
       throw new PromptGuardCliError(
         `Test directory not found: ${relative(cwd, dirPath) || dirPath}`,
-        "Run `prompt-guard init` to scaffold it, or point `testsDir` in promptguard.config.ts at an existing directory."
+        "Run `promptguard init` to scaffold it, or point `testsDir` in promptguard.config.ts at an existing directory."
       );
     }
 
@@ -46,7 +54,7 @@ export async function loadTestCases(cwd: string, testsDir: string): Promise<Eval
   if (files.length === 0) {
     throw new PromptGuardCliError(
       `No .json test files in ${relative(cwd, dirPath) || dirPath}`,
-      "Add a test file, or run `prompt-guard init` to generate a sample."
+      "Add a test file, or run `promptguard init` to generate a sample."
     );
   }
 
@@ -67,12 +75,17 @@ export async function loadTestCases(cwd: string, testsDir: string): Promise<Eval
       );
     }
 
+    const fileScope = parsed.prompts;
+
     parsed.cases.forEach((testCase, index) => {
+      const scope = testCase.prompts ?? fileScope;
+
       allCases.push({
-        name: `${fileName}#${index + 1}`,
+        name: testCase.name ?? `${fileName}#${index + 1}`,
         input: testCase.input,
         expect: testCase.expect ?? null,
-        ...(testCase.assert !== undefined ? { assert: testCase.assert } : {})
+        ...(testCase.assert !== undefined ? { assert: testCase.assert } : {}),
+        ...(scope !== undefined ? { prompts: scope } : {})
       });
     });
   }

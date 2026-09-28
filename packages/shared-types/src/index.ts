@@ -49,6 +49,8 @@ export interface TestCase {
   expect?: string | null | undefined;
   /** Deterministic, zero-token checks run before the judge. */
   assert?: Assertion | undefined;
+  /** Prompt names this case applies to. Absent means every registered prompt. */
+  prompts?: string[] | undefined;
 }
 
 export interface TestCases {
@@ -103,6 +105,18 @@ export type RunStatus = "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
 
 export interface NamedTestCase extends TestCase {
   name: string;
+}
+
+/**
+ * Narrows a suite to the cases that apply to one prompt.
+ *
+ * Shared by the CLI and the API so local and remote runs scope cases the same
+ * way; an SQL-generator case must never be scored against a support agent.
+ */
+export function selectCasesForPrompt<T extends TestCase>(cases: T[], promptName: string): T[] {
+  return cases.filter(
+    (testCase) => testCase.prompts === undefined || testCase.prompts.includes(promptName)
+  );
 }
 
 export interface RunPromptInput {

@@ -85,6 +85,33 @@ describe("POST /runs", () => {
     expect(queues.promptRunQueue.added).toHaveLength(2);
   });
 
+  it("sends each prompt's job only the cases scoped to it", async () => {
+    await app.inject({
+      method: "POST",
+      url: "/runs",
+      payload: {
+        ...VALID_RUN,
+        prompts: [
+          { name: "sql", versionB: "Write SQL." },
+          { name: "support", versionB: "Be kind." }
+        ],
+        testCases: [
+          { name: "shared", input: "hi", expect: "ok" },
+          { name: "sql-only", input: "hi", expect: "ok", prompts: ["sql"] }
+        ]
+      }
+    });
+
+    const byPrompt = Object.fromEntries(
+      queues.promptRunQueue.added.map(({ payload }) => {
+        const job = payload as { prompt: { name: string }; testCases: Array<{ name: string }> };
+        return [job.prompt.name, job.testCases.map((c) => c.name)];
+      })
+    );
+
+    expect(byPrompt).toEqual({ sql: ["shared", "sql-only"], support: ["shared"] });
+  });
+
   describe("prompt version deduplication", () => {
     it("creates exactly one version for a first-time prompt", async () => {
       await app.inject({ method: "POST", url: "/runs", payload: VALID_RUN });

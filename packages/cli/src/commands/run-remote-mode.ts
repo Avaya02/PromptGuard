@@ -1,5 +1,9 @@
 import type { PromptEvaluationResult } from "@promptguard/evaluator";
-import type { CreateRunRequest, RunResultRecord } from "@promptguard/shared-types";
+import {
+  selectCasesForPrompt,
+  type CreateRunRequest,
+  type RunResultRecord
+} from "@promptguard/shared-types";
 import type { Ora } from "ora";
 
 import type { TestModeContext } from "./test-command.js";
@@ -68,6 +72,13 @@ function toPromptResults(
   });
 }
 
+/** Prompts with at least one applicable case; the rest would only produce empty jobs. */
+function promptsInScope(context: TestModeContext) {
+  return context.currentPrompts.filter(
+    (prompt) => selectCasesForPrompt(context.testCases, prompt.name).length > 0
+  );
+}
+
 function buildCreateRunRequest(context: TestModeContext, commitSha: string): CreateRunRequest {
   return {
     commitSha,
@@ -75,7 +86,7 @@ function buildCreateRunRequest(context: TestModeContext, commitSha: string): Cre
     threshold: context.config.threshold,
     generationModel: context.config.generationModel,
     judgeModel: context.config.judgeModel,
-    prompts: context.currentPrompts.map((prompt) => ({
+    prompts: promptsInScope(context).map((prompt) => ({
       name: prompt.name,
       versionB: prompt.content,
       ...(context.baselineByName.has(prompt.name)
@@ -106,7 +117,7 @@ export async function runRemoteMode(
   return {
     status: run.status === "FAILED" ? "FAILED" : "COMPLETED",
     results: toPromptResults(
-      context.currentPrompts.map((prompt) => prompt.name),
+      promptsInScope(context).map((prompt) => prompt.name),
       records,
       context.config.threshold
     )

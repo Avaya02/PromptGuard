@@ -12,7 +12,8 @@ const testCaseSchema = z.object({
   name: z.string().min(1),
   input: z.string().min(1),
   expect: z.string().nullable().optional(),
-  assert: assertionSchema.optional()
+  assert: assertionSchema.optional(),
+  prompts: z.array(z.string().min(1)).optional()
 });
 
 const runPromptInputSchema = z.object({
