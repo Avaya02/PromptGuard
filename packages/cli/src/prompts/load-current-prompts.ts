@@ -10,8 +10,8 @@ export async function loadCurrentPrompts(cwd: string): Promise<RegisteredPrompt[
 
   if (prompts.length === 0) {
     throw new PromptGuardCliError(
-      "No registered prompts found in .promptguard/prompts.json",
-      "Run `prompt-guard init` to scaffold the project, then call definePrompt(name, content) from your app code to register a prompt."
+      "No prompts registered yet.",
+      "Register one with `promptguard add <name> <file>` (or definePrompt() in code). New project? `promptguard init` scaffolds a working example."
     );
   }
 

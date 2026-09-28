@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 
+import { definePrompt, readPromptRegistry } from "@promptguard/sdk";
 import chalk from "chalk";
 
 export interface InitCommandArgs {
@@ -60,24 +61,29 @@ export default {
 `;
 }
 
+const SAMPLE_PROMPT_NAME = "support-agent";
+
+const SAMPLE_PROMPT = [
+  "You are a support agent for an online store.",
+  "Acknowledge the customer's frustration, offer a concrete remedy (refund or",
+  "replacement), and never blame the customer."
+].join(" ");
+
+// Both cases pass on the offline mock provider, so `init && test` is green on
+// the first run, and both stay meaningful once a real model is configured.
 const SAMPLE_TESTS = `{
+  "prompts": ["${SAMPLE_PROMPT_NAME}"],
   "cases": [
     {
-      "input": "Return a JSON object with keys \\"status\\" and \\"code\\".",
+      "name": "no-canned-refusals",
+      "input": "My order arrived damaged and I want a refund.",
       "assert": {
-        "json_schema": {
-          "type": "object",
-          "required": ["status", "code"],
-          "properties": {
-            "status": { "type": "string" },
-            "code": { "type": "number" }
-          }
-        },
-        "not_contains": "I'm sorry",
-        "max_latency_ms": 10000
+        "not_contains": ["As an AI language model", "I cannot help with that"],
+        "max_latency_ms": 15000
       }
     },
     {
+      "name": "handles-damaged-order",
       "input": "A customer is angry their order arrived damaged. Reply to them.",
       "expect": "Apologises, acknowledges the damage, and offers a refund or replacement without blaming the customer."
     }
@@ -85,17 +91,23 @@ const SAMPLE_TESTS = `{
 }
 `;
 
-const SAMPLE_PROMPT_USAGE = `// Register prompts from your application code:
-//
-//   import { definePrompt } from "@promptguard/sdk";
-//
-//   await definePrompt(
-//     "customer-support-agent",
-//     "You are a helpful support agent. Be concise and empathetic."
-//   );
-//
-// definePrompt writes to .promptguard/prompts.json, which MUST be committed:
-// \`prompt-guard test --base <ref>\` reads the baseline from git history.
+const REGISTRY_README = `# .promptguard
+
+\`prompts.json\` is the prompt registry. **Commit it.** \`promptguard test --base <ref>\`
+reads the baseline version of every prompt out of git history, so an ignored
+registry means there is nothing to compare against.
+
+Register or update a prompt from the command line:
+
+    promptguard add <name> path/to/prompt.md
+    promptguard add <name> --content "You are a helpful assistant."
+
+Or from application code:
+
+    import { definePrompt } from "@promptguard/sdk";
+    await definePrompt("support-agent", "You are a support agent...");
+
+Unchanged content never bumps the version, so both are safe to run on every build.
 `;
 
 async function writeIfAbsent(
@@ -141,16 +153,19 @@ export async function runInitCommand(args: InitCommandArgs): Promise<number> {
     await writeIfAbsent(samplePath, SAMPLE_TESTS, force)
   ]);
 
-  // Seed an empty registry so `prompt-guard test` fails with a clear message
-  // about definePrompt rather than a missing directory.
+  // Seed one real prompt so the very first `promptguard test` has something to
+  // run. An empty registry would make the first command after init fail.
   const registryPath = resolve(cwd, ".promptguard", "prompts.json");
-  actions.push([
-    relative(cwd, registryPath),
-    await writeIfAbsent(registryPath, `{\n  "prompts": []\n}\n`, force)
-  ]);
+  const existing = await readPromptRegistry({ cwd });
+  if (existing.length === 0 || force) {
+    await definePrompt(SAMPLE_PROMPT_NAME, SAMPLE_PROMPT, { cwd });
+    actions.push([relative(cwd, registryPath), "created"]);
+  } else {
+    actions.push([relative(cwd, registryPath), "skipped"]);
+  }
 
   const readmePath = resolve(cwd, ".promptguard", "README.md");
-  actions.push([relative(cwd, readmePath), await writeIfAbsent(readmePath, SAMPLE_PROMPT_USAGE, force)]);
+  actions.push([relative(cwd, readmePath), await writeIfAbsent(readmePath, REGISTRY_README, force)]);
 
   console.log("");
   for (const [file, state] of actions) {
@@ -160,12 +175,14 @@ export async function runInitCommand(args: InitCommandArgs): Promise<number> {
 
   console.log("");
   console.log(chalk.bold("PromptGuard initialised."), `Provider: ${chalk.cyan(provider)}`);
-  console.log(`  ${PROVIDER_PRESETS[provider]!.note}`);
+  console.log(chalk.dim(`  ${PROVIDER_PRESETS[provider]!.note}`));
   console.log("");
   console.log("Next:");
-  console.log("  1. Register a prompt with definePrompt() — see .promptguard/README.md");
-  console.log("  2. Commit .promptguard/prompts.json (baselines are read from git history)");
-  console.log("  3. Run `prompt-guard test`");
+  console.log(`  ${chalk.cyan("promptguard test")}                 run the sample suite`);
+  console.log(`  ${chalk.cyan("promptguard add <name> <file>")}    register your own prompt`);
+  console.log(`  ${chalk.cyan("promptguard doctor")}               check your setup`);
+  console.log("");
+  console.log(chalk.dim("  Commit .promptguard/prompts.json — baselines are read from git history."));
   console.log("");
 
   return 0;

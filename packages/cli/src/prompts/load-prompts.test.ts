@@ -50,7 +50,7 @@ describe("loadCurrentPrompts", () => {
   });
 
   it("raises an actionable error when the registry is absent", async () => {
-    await expect(loadCurrentPrompts(cwd)).rejects.toThrow(/No registered prompts/);
+    await expect(loadCurrentPrompts(cwd)).rejects.toThrow(/No prompts registered/);
   });
 
   it("raises an actionable error when the registry is empty", async () => {
@@ -58,7 +58,7 @@ describe("loadCurrentPrompts", () => {
 
     const error = await loadCurrentPrompts(cwd).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(PromptGuardCliError);
-    expect((error as PromptGuardCliError).hint).toContain("definePrompt");
+    expect((error as PromptGuardCliError).hint).toContain("promptguard add");
   });
 });
 

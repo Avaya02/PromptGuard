@@ -25,17 +25,51 @@ afterEach(async () => {
 });
 
 describe("runInitCommand", () => {
-  it("scaffolds config, sample tests, and an empty registry", async () => {
+  it("scaffolds config, sample tests, and a registry seeded with a sample prompt", async () => {
     expect(await runInitCommand({})).toBe(0);
 
     const config = await readFile(join(cwd, "promptguard.config.ts"), "utf-8");
     expect(config).toContain('provider: "mock"');
     expect(config).toContain("threshold");
 
+    // An empty registry would make the first `promptguard test` after init fail.
     const registry = JSON.parse(await readFile(join(cwd, ".promptguard/prompts.json"), "utf-8"));
-    expect(registry).toEqual({ prompts: [] });
+    expect(registry.prompts).toHaveLength(1);
+    expect(registry.prompts[0].name).toBe("support-agent");
+    expect(registry.prompts[0].version).toBe(1);
 
     await readFile(join(cwd, "prompt_tests/sample.json"), "utf-8");
+  });
+
+  it("produces a project whose first test run passes", async () => {
+    await runInitCommand({});
+
+    const { runTestCommand } = await import("./test-command.js");
+    vi.spyOn(console, "table").mockImplementation(() => {});
+
+    // The first thing a new user does after init; it must be green.
+    expect(await runTestCommand({})).toBe(0);
+  });
+
+  it("scopes the sample suite to the sample prompt", async () => {
+    await runInitCommand({});
+    const cases = await loadTestCases(cwd, "prompt_tests");
+    expect(cases.every((c) => c.prompts?.includes("support-agent"))).toBe(true);
+  });
+
+  it("does not overwrite a registry that already has prompts", async () => {
+    await mkdir(join(cwd, ".promptguard"), { recursive: true });
+    const now = new Date().toISOString();
+    await writeFile(
+      join(cwd, ".promptguard/prompts.json"),
+      JSON.stringify({ prompts: [{ name: "mine", content: "c", hash: "h", version: 3, createdAt: now, updatedAt: now }] }),
+      "utf-8"
+    );
+
+    await runInitCommand({});
+
+    const registry = JSON.parse(await readFile(join(cwd, ".promptguard/prompts.json"), "utf-8"));
+    expect(registry.prompts.map((p: { name: string }) => p.name)).toEqual(["mine"]);
   });
 
   it("generates sample tests the loader accepts", async () => {

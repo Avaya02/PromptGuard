@@ -34,7 +34,7 @@ export function PromptsListPage(): JSX.Element {
     return (
       <EmptyState
         title="No prompts registered yet"
-        description="Seed the demo data with `docker compose exec api-server pnpm seed`, or register a prompt from your own code with definePrompt() and run `prompt-guard test`."
+        description="Seed the demo data with `docker compose exec api-server npm run seed`, or register a prompt with `promptguard add` and run `promptguard test`."
       />
     );
   }

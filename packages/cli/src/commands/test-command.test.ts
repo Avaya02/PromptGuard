@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { runTestCommand } from "./test-command.js";
+import { findUnknownScopes, runTestCommand } from "./test-command.js";
 
 let cwd: string;
 let originalCwd: string;
@@ -128,24 +128,108 @@ describe("runTestCommand exit codes", () => {
 });
 
 describe("runTestCommand error handling", () => {
-  it("returns 1 and prints a hint when config is missing", async () => {
-    expect(await runTestCommand({})).toBe(1);
-    expect(errors.join("\n")).toContain("prompt-guard init");
+  // Setup errors exit 2, distinct from 1 (a regression), so CI can tell a
+  // failed check from a broken job.
+  it("returns 2 and prints a hint when config is missing", async () => {
+    expect(await runTestCommand({})).toBe(2);
+    expect(errors.join("\n")).toContain("promptguard init");
   });
 
-  it("returns 1 and prints a hint when the registry is empty", async () => {
+  it("returns 2 and points at `promptguard add` when the registry is empty", async () => {
     await scaffold();
     await writeFile(join(cwd, ".promptguard", "prompts.json"), '{"prompts":[]}', "utf-8");
 
-    expect(await runTestCommand({})).toBe(1);
-    expect(errors.join("\n")).toContain("definePrompt");
+    expect(await runTestCommand({})).toBe(2);
+    expect(errors.join("\n")).toContain("promptguard add");
   });
 
-  it("returns 1 and prints a hint when the tests directory is missing", async () => {
+  it("returns 2 and prints a hint when the tests directory is missing", async () => {
     await scaffold();
     await rm(join(cwd, "prompt_tests"), { recursive: true, force: true });
 
-    expect(await runTestCommand({})).toBe(1);
-    expect(errors.join("\n")).toContain("prompt-guard init");
+    expect(await runTestCommand({})).toBe(2);
+    expect(errors.join("\n")).toContain("promptguard init");
+  });
+});
+
+describe("runTestCommand --json", () => {
+  let stdout: string[];
+
+  beforeEach(() => {
+    stdout = [];
+    vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
+      stdout.push(String(chunk));
+      return true;
+    });
+  });
+
+  it("writes a parseable report and nothing human-formatted", async () => {
+    await scaffold();
+
+    expect(await runTestCommand({ json: true })).toBe(0);
+
+    const report = JSON.parse(stdout.join(""));
+    expect(report.schemaVersion).toBe(1);
+    expect(report.pass).toBe(true);
+    expect(report.summary.cases).toBe(1);
+  });
+
+  it("reports a failing run with pass false and exit 1", async () => {
+    await scaffold({ threshold: 0, cases: [{ input: "x", assert: { contains: "NOPE" } }] });
+
+    expect(await runTestCommand({ json: true })).toBe(1);
+    expect(JSON.parse(stdout.join("")).pass).toBe(false);
+  });
+
+  it("reports setup errors as JSON too", async () => {
+    expect(await runTestCommand({ json: true })).toBe(2);
+
+    const report = JSON.parse(stdout.join(""));
+    expect(report.pass).toBe(false);
+    expect(report.error.message).toContain("promptguard.config.ts");
+    expect(report.error.hint).toContain("promptguard init");
+  });
+});
+
+describe("runTestCommand scoping", () => {
+  it("runs a scoped case only against its prompt", async () => {
+    await scaffold({
+      threshold: 0,
+      prompts: [
+        { name: "sql", content: "Write SQL." },
+        { name: "support", content: "Be kind." }
+      ],
+      // Would fail against every prompt; scoping must keep it off "support".
+      cases: [{ input: "x", assert: { contains: "NOPE" }, prompts: ["sql"] }]
+    });
+
+    const stdout: string[] = [];
+    vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
+      stdout.push(String(chunk));
+      return true;
+    });
+
+    expect(await runTestCommand({ json: true })).toBe(1);
+
+    const report = JSON.parse(stdout.join(""));
+    expect(report.prompts.map((p: { promptName: string }) => p.promptName)).toEqual(["sql"]);
+  });
+});
+
+describe("findUnknownScopes", () => {
+  it("lists scope names with no registered prompt", () => {
+    const now = new Date().toISOString();
+    const registered = [{ name: "a", content: "c", hash: "h", version: 1, createdAt: now, updatedAt: now }];
+
+    expect(
+      findUnknownScopes(
+        [
+          { name: "1", input: "i", expect: "r", prompts: ["a", "typo"] },
+          { name: "2", input: "i", expect: "r", prompts: ["ghost"] },
+          { name: "3", input: "i", expect: "r" }
+        ],
+        registered
+      )
+    ).toEqual(["ghost", "typo"]);
   });
 });
