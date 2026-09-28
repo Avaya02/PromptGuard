@@ -31,7 +31,7 @@ export class OpenAIProvider implements LLMProvider {
   private readonly baseUrl: string;
   private readonly generationModel: string;
   private readonly judgeModel: string;
-  private readonly apiKey: string;
+  private readonly apiKey: string | undefined;
 
   constructor(options: OpenAIProviderOptions) {
     this.baseUrl = options.baseUrl ?? "https://api.openai.com";
@@ -40,7 +40,11 @@ export class OpenAIProvider implements LLMProvider {
 
     const apiKeyEnvVar = options.apiKeyEnvVar ?? "OPENAI_API_KEY";
     const resolvedApiKey = options.apiKey ?? process.env[apiKeyEnvVar];
-    if (!resolvedApiKey) {
+
+    // A custom baseUrl means an OpenAI-compatible server (vLLM, llama.cpp,
+    // LM Studio), which is commonly run without auth. Only api.openai.com
+    // itself always requires a key.
+    if (!resolvedApiKey && options.baseUrl === undefined) {
       throw new Error(`Missing OpenAI API key. Set ${apiKeyEnvVar} or pass apiKey in options.`);
     }
 
@@ -95,7 +99,7 @@ export class OpenAIProvider implements LLMProvider {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          authorization: `Bearer ${this.apiKey}`
+          ...(this.apiKey !== undefined ? { authorization: `Bearer ${this.apiKey}` } : {})
         },
         body: JSON.stringify({
           model,

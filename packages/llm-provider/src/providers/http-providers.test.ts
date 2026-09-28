@@ -78,6 +78,31 @@ describe("provider API key handling", () => {
   });
 });
 
+describe("OpenAIProvider against OpenAI-compatible servers", () => {
+  it("runs keyless when a custom baseUrl is set", async () => {
+    vi.unstubAllEnvs();
+    const { calls } = stubFetch(async () =>
+      jsonResponse({ choices: [{ message: { content: "hi" } }], usage: {} })
+    );
+
+    const provider = new OpenAIProvider({ generationModel: "llama-3", baseUrl: "http://localhost:8000" });
+    await expect(provider.generate("s", "u")).resolves.toBe("hi");
+
+    // No key, so no Authorization header rather than "Bearer undefined".
+    expect(requestHeaders(calls[0]!).authorization).toBeUndefined();
+    expect(String(calls[0]![0])).toBe("http://localhost:8000/v1/chat/completions");
+  });
+
+  it("still sends a key to a custom server when one is configured", async () => {
+    const { calls } = stubFetch(async () =>
+      jsonResponse({ choices: [{ message: { content: "hi" } }], usage: {} })
+    );
+
+    await new OpenAIProvider({ generationModel: "m", baseUrl: "http://vllm:8000", apiKey: "secret" }).generate("s", "u");
+    expect(requestHeaders(calls[0]!).authorization).toBe("Bearer secret");
+  });
+});
+
 describe("AnthropicProvider", () => {
   it("extracts text blocks and reports token usage", async () => {
     globalThis.fetch = vi.fn(async () =>
