@@ -1,7 +1,8 @@
-# Multi-stage build: the final image carries only production deps and dist
-# output, keeping it small enough for a 512 MB VPS.
+# Multi-stage build: the final image carries only production dependencies and
+# compiled output, small enough for a 512 MB VPS.
 FROM node:22-alpine AS base
-RUN corepack enable
+# Prisma's query engine links against OpenSSL, which Alpine omits by default.
+RUN apk add --no-cache openssl && corepack enable
 WORKDIR /app
 
 FROM base AS build
@@ -25,14 +26,17 @@ RUN pnpm --filter @promptguard/shared-types build \
  && pnpm --filter @promptguard/evaluator build \
  && pnpm --filter @promptguard/api-server build
 
-# Drop dev dependencies before copying into the runtime image.
-RUN pnpm --filter @promptguard/api-server --prod deploy /tmp/api-server
+# pnpm 10 only deploys non-injected workspace packages in legacy mode.
+RUN pnpm --filter @promptguard/api-server --prod deploy --legacy /tmp/api-server
 
 FROM base AS runtime
 ENV NODE_ENV=production
 COPY --from=build /tmp/api-server ./
 COPY --from=build /app/apps/api-server/prisma ./prisma
+# deploy reinstalls from the lockfile, which drops the client generated in the
+# build stage, so generate it again against this image's own node_modules.
+RUN npx prisma generate --schema prisma/schema.prisma
 
 EXPOSE 4000
-# Migrations run at start so `docker compose up` yields a usable schema.
+# Migrations apply at start so `docker compose up` yields a usable schema.
 CMD ["sh", "-c", "npx prisma migrate deploy --schema prisma/schema.prisma && node dist/server.js"]

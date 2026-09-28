@@ -1,5 +1,5 @@
 FROM node:22-alpine AS base
-RUN corepack enable
+RUN apk add --no-cache openssl && corepack enable
 WORKDIR /app
 
 FROM base AS build
@@ -15,7 +15,7 @@ COPY apps/web-dashboard/package.json ./apps/web-dashboard/
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY packages ./packages
-# The worker generates its Prisma client from the api-server schema.
+# The worker's Prisma client is generated from the api-server schema.
 COPY apps/api-server/prisma ./apps/api-server/prisma
 COPY apps/worker ./apps/worker
 
@@ -24,10 +24,12 @@ RUN pnpm --filter @promptguard/shared-types build \
  && pnpm --filter @promptguard/evaluator build \
  && pnpm --filter @promptguard/worker build
 
-RUN pnpm --filter @promptguard/worker --prod deploy /tmp/worker
+RUN pnpm --filter @promptguard/worker --prod deploy --legacy /tmp/worker
 
 FROM base AS runtime
 ENV NODE_ENV=production
 COPY --from=build /tmp/worker ./
+COPY --from=build /app/apps/api-server/prisma ./prisma
+RUN npx prisma generate --schema prisma/schema.prisma
 
 CMD ["node", "dist/index.js"]

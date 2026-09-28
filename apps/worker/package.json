@@ -21,10 +21,10 @@
     "@promptguard/llm-provider": "workspace:*",
     "@promptguard/shared-types": "workspace:*",
     "bullmq": "^5.58.0",
+    "prisma": "^6.16.1",
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "prisma": "^6.16.1",
     "tsx": "^4.20.5"
   }
 }
