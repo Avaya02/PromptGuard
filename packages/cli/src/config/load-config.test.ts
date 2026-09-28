@@ -59,7 +59,7 @@ describe("loadConfig", () => {
     const error = await loadConfig(cwd).catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(PromptGuardCliError);
-    expect((error as PromptGuardCliError).hint).toContain("prompt-guard init");
+    expect((error as PromptGuardCliError).hint).toContain("promptguard init");
   });
 
   describe("validation", () => {

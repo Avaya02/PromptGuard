@@ -1,33 +1,64 @@
 {
-  "name": "prompt-guard",
+  "name": "promptguard",
   "version": "0.1.0",
-  "private": false,
+  "description": "Regression tests for LLM prompts. Deterministic checks run free; an LLM judge runs only when needed.",
+  "keywords": [
+    "llm",
+    "prompt",
+    "testing",
+    "regression",
+    "evals",
+    "cli",
+    "ci",
+    "openai",
+    "anthropic",
+    "ollama"
+  ],
+  "license": "MIT",
+  "author": "Avaya Sharma",
+  "homepage": "https://github.com/Avaya02/PromptGuard#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Avaya02/PromptGuard.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/Avaya02/PromptGuard/issues"
+  },
   "type": "module",
   "bin": {
-    "prompt-guard": "dist/bin/prompt-guard.js"
+    "promptguard": "dist/cli.js",
+    "prompt-guard": "dist/cli.js"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsup",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src --ext .ts",
     "clean": "rm -rf dist",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "pnpm run build"
   },
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
     "@promptguard/evaluator": "workspace:*",
     "@promptguard/llm-provider": "workspace:*",
     "@promptguard/sdk": "workspace:*",
     "@promptguard/shared-types": "workspace:*",
+    "ajv": "^8.20.0",
     "chalk": "^5.4.1",
     "execa": "^9.5.2",
     "ora": "^8.2.0",
-    "typescript": "^5.9.3",
+    "p-limit": "^7.3.2",
+    "sucrase": "^3.35.1",
+    "tsup": "^8.5.1",
     "yargs": "^17.7.2",
     "zod": "^3.24.2"
   }

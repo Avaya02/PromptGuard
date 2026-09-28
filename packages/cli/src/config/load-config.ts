@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { Buffer } from "node:buffer";
 
 import type { PromptGuardConfig } from "@promptguard/shared-types";
-import ts from "typescript";
+import { transform } from "sucrase";
 import { z } from "zod";
 
 import { PromptGuardCliError, isFileNotFound } from "../errors.js";
@@ -33,21 +33,19 @@ export async function loadConfig(cwd: string): Promise<PromptGuardConfig> {
     if (isFileNotFound(error)) {
       throw new PromptGuardCliError(
         "No promptguard.config.ts found in this directory.",
-        "Run `prompt-guard init` to create one."
+        "Run `promptguard init` to create one."
       );
     }
 
     throw error;
   }
 
-  const transpiled = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.ESNext,
-      target: ts.ScriptTarget.ES2022
-    }
-  });
+  // Sucrase only strips types, which is all a config file needs. It replaced
+  // the full TypeScript compiler here: 1.6 MB instead of 23 MB on every cold
+  // `npx promptguard` install.
+  const transpiled = transform(source, { transforms: ["typescript"], filePath: configPath });
 
-  const dataUrl = `data:text/javascript;base64,${Buffer.from(transpiled.outputText).toString("base64")}`;
+  const dataUrl = `data:text/javascript;base64,${Buffer.from(transpiled.code).toString("base64")}`;
   const loaded = await import(dataUrl);
   return promptGuardConfigSchema.parse(loaded.default);
 }

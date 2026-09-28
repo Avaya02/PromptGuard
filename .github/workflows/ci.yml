@@ -161,14 +161,29 @@ jobs:
       - name: Build
         run: corepack pnpm -r build
 
-      - name: Verify init scaffolds a working project
+      # Tests the tarball npm would publish, installed the way a user installs
+      # it, rather than the workspace build. Catches a broken bundle, a missing
+      # file in "files", or a dependency that only resolves inside the monorepo.
+      - name: Smoke-test the packed npm artifact
         run: |
-          mkdir -p /tmp/scaffold-check
-          cd /tmp/scaffold-check
-          node "$GITHUB_WORKSPACE/packages/cli/dist/bin/prompt-guard.js" init
-          test -f promptguard.config.ts
-          test -f prompt_tests/sample.json
-          test -f .promptguard/prompts.json
+          cd packages/cli
+          mkdir -p /tmp/pkg   # npm pack fails if the destination is missing
+          npm pack --pack-destination /tmp/pkg
+          mkdir -p /tmp/new-user && cd /tmp/new-user
+          git init -q
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund /tmp/pkg/promptguard-*.tgz
+
+          npx promptguard --version
+          npx promptguard init
+          npx promptguard test          # a fresh project must pass first time
+          npx promptguard doctor
+          npx promptguard test --json | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{if(JSON.parse(d).pass!==true)process.exit(1)})'
+
+          # Setup errors must exit 2, distinct from a regression (1).
+          mkdir -p /tmp/empty && cd /tmp/empty
+          set +e; npx --prefix /tmp/new-user promptguard test; code=$?; set -e
+          test "$code" -eq 2
 
       # MockProvider plus deterministic assertions: no network, no API key,
       # no spend. This is the end-to-end proof the CLI works.
@@ -180,4 +195,4 @@ jobs:
             BASE_REF="HEAD~1"
           fi
 
-          node packages/cli/dist/bin/prompt-guard.js test --base "$BASE_REF"
+          node packages/cli/dist/cli.js test --base "$BASE_REF"
