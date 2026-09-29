@@ -40,14 +40,16 @@ jobs:
       - name: Install
         run: corepack pnpm install --frozen-lockfile
 
+      # Build first: workspace packages resolve each other through dist/, so a
+      # typecheck on a fresh checkout cannot find their type declarations.
+      - name: Build
+        run: corepack pnpm -r build
+
       - name: Typecheck
         run: corepack pnpm -r typecheck
 
       - name: Lint
         run: corepack pnpm -r lint
-
-      - name: Build
-        run: corepack pnpm -r build
 
       # No API keys are set in this job, so MockProvider is the only provider
       # that can be constructed. Any accidental live call would fail loudly.
