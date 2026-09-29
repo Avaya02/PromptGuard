@@ -1,0 +1,33 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --pg-slate: #1f3345;
+  --pg-ink: #10212f;
+  --pg-sand: #f7f4ec;
+  --pg-cyan: #53d0da;
+  --pg-coral: #f76f58;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Space Grotesk", "Avenir Next", sans-serif;
+  color: var(--pg-ink);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(83, 208, 218, 0.24), transparent 40%),
+    radial-gradient(circle at 88% 10%, rgba(247, 111, 88, 0.2), transparent 45%),
+    linear-gradient(160deg, #f4efe1 0%, #f9f8f4 45%, #edf6f6 100%);
+}
+
+code,
+pre {
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@promptguard/api-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/server.js",
+  "types": "dist/server.d.ts",
+  "scripts": {
+    "build": "prisma generate --schema prisma/schema.prisma && tsc -p tsconfig.build.json",
+    "typecheck": "prisma generate --schema prisma/schema.prisma && tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts",
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts",
+    "prisma:generate": "prisma generate --schema prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema prisma/schema.prisma",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "seed": "tsx prisma/seed.ts",
+    "prisma:deploy": "prisma migrate deploy --schema prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.1",
+    "@promptguard/evaluator": "workspace:^",
+    "@promptguard/llm-provider": "workspace:^",
+    "@promptguard/shared-types": "workspace:*",
+    "bullmq": "^5.58.0",
+    "fastify": "^5.2.1",
+    "prisma": "^6.16.1",
+    "tsx": "^4.20.5",
+    "zod": "^3.24.2"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  }
+}

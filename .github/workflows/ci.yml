@@ -1,0 +1,198 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+# A new push supersedes an in-flight run on the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Typecheck, lint & unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Get pnpm store path
+        id: pnpm-store
+        run: echo "path=$(corepack pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+
+      - name: Install
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: corepack pnpm -r typecheck
+
+      - name: Lint
+        run: corepack pnpm -r lint
+
+      - name: Build
+        run: corepack pnpm -r build
+
+      # No API keys are set in this job, so MockProvider is the only provider
+      # that can be constructed. Any accidental live call would fail loudly.
+      - name: Unit tests with coverage
+        run: corepack pnpm -r test:coverage
+
+      - name: Publish coverage summary
+        if: always()
+        run: |
+          {
+            echo "## Coverage"
+            echo ""
+            echo "| Package | Lines | Branches | Functions |"
+            echo "|---|---|---|---|"
+            for summary in packages/*/coverage/coverage-summary.json apps/*/coverage/coverage-summary.json; do
+              [ -f "$summary" ] || continue
+              pkg=$(echo "$summary" | cut -d/ -f1-2)
+              node -e '
+                const fs = require("node:fs");
+                const total = JSON.parse(fs.readFileSync(process.argv[1], "utf8")).total;
+                const pct = (m) => (total[m] ? total[m].pct : 0) + "%";
+                console.log(`| ${process.argv[2]} | ${pct("lines")} | ${pct("branches")} | ${pct("functions")} |`);
+              ' "$summary" "$pkg"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  integration:
+    name: API & worker integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: promptguard
+          POSTGRES_PASSWORD: promptguard
+          POSTGRES_DB: promptguard
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U promptguard"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://promptguard:promptguard@127.0.0.1:5432/promptguard?schema=public
+      REDIS_URL: redis://127.0.0.1:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Build
+        run: corepack pnpm -r build
+
+      # Proves the migrations actually apply to a real PostgreSQL instance,
+      # which the in-memory route tests cannot cover.
+      - name: Apply migrations
+        run: corepack pnpm --filter @promptguard/api-server prisma:deploy
+
+      - name: Seed demo data
+        run: corepack pnpm --filter @promptguard/api-server seed
+
+      - name: Integration tests
+        run: |
+          corepack pnpm --filter @promptguard/api-server test
+          corepack pnpm --filter @promptguard/worker test
+
+  regression-demo:
+    name: Prompt regression suite (zero cost)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Baseline diffing reads the registry out of git history.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Build
+        run: corepack pnpm -r build
+
+      # Tests the tarball npm would publish, installed the way a user installs
+      # it, rather than the workspace build. Catches a broken bundle, a missing
+      # file in "files", or a dependency that only resolves inside the monorepo.
+      - name: Smoke-test the packed npm artifact
+        run: |
+          cd packages/cli
+          mkdir -p /tmp/pkg   # npm pack fails if the destination is missing
+          npm pack --pack-destination /tmp/pkg
+          mkdir -p /tmp/new-user && cd /tmp/new-user
+          git init -q
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund /tmp/pkg/promptguard-*.tgz
+
+          npx promptguard --version
+          npx promptguard init
+          npx promptguard test          # a fresh project must pass first time
+          npx promptguard doctor
+          npx promptguard test --json | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{if(JSON.parse(d).pass!==true)process.exit(1)})'
+
+          # Setup errors must exit 2, distinct from a regression (1).
+          mkdir -p /tmp/empty && cd /tmp/empty
+          set +e; npx --prefix /tmp/new-user promptguard test; code=$?; set -e
+          test "$code" -eq 2
+
+      # MockProvider plus deterministic assertions: no network, no API key,
+      # no spend. This is the end-to-end proof the CLI works.
+      - name: Run regression suite
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="origin/${{ github.base_ref }}"
+          else
+            BASE_REF="HEAD~1"
+          fi
+
+          node packages/cli/dist/cli.js test --base "$BASE_REF"

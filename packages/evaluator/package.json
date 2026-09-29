@@ -1,0 +1,25 @@
+{
+  "name": "@promptguard/evaluator",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@promptguard/llm-provider": "workspace:*",
+    "@promptguard/shared-types": "workspace:*",
+    "ajv": "^8.20.0",
+    "p-limit": "^7.3.2"
+  }
+}

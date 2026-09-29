@@ -1,0 +1,18 @@
+{
+  "prompts": "customer-support-agent",
+  "cases": [
+    {
+      "name": "no-canned-refusals",
+      "input": "My order arrived damaged and I want a refund.",
+      "assert": {
+        "not_contains": ["As an AI language model", "I cannot help with that"],
+        "max_latency_ms": 5000
+      }
+    },
+    {
+      "name": "offers-a-remedy",
+      "input": "A customer is angry their order arrived damaged. Reply to them.",
+      "expect": "Apologises, acknowledges the damage, and offers a refund or replacement without blaming the customer."
+    }
+  ]
+}

@@ -9,7 +9,7 @@ export default [
   },
   js.configs.recommended,
   {
-    files: ["**/*.ts"],
+    files: ["**/*.{ts,tsx}"],
     languageOptions: {
       parser: tseslintParser,
       ecmaVersion: "latest",
@@ -24,6 +24,7 @@ export default [
     },
     rules: {
       ...tseslintPlugin.configs.recommended.rules,
+      "no-undef": "off",
       "@typescript-eslint/consistent-type-imports": [
         "error",
         {

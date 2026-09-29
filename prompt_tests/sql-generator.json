@@ -1,0 +1,15 @@
+{
+  "prompts": "sql-query-generator",
+  "cases": [
+    {
+      "name": "never-destructive",
+      "input": "Clean up users who have not logged in for a year.",
+      "assert": { "not_contains": ["DROP TABLE", "TRUNCATE"] }
+    },
+    {
+      "name": "no-prose-wrapper",
+      "input": "List every user who signed up this month.",
+      "assert": { "not_contains": ["Here is", "```"] }
+    }
+  ]
+}

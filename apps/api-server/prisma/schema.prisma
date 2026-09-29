@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RunEnvironment {
+  LOCAL
+  CI
+  PROD
+}
+
+enum RunStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum AssertionType {
+  DETERMINISTIC
+  SEMANTIC
+}
+
+model Prompt {
+  id            String          @id @default(cuid())
+  name          String          @unique
+  latestVersion Int             @default(1) @map("latest_version")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  versions      PromptVersion[]
+
+  @@map("prompts")
+}
+
+model PromptVersion {
+  id        String   @id @default(cuid())
+  promptId  String   @map("prompt_id")
+  prompt    Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  commitSha String   @map("commit_sha")
+  content   String
+  hash      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([promptId])
+  @@map("prompt_versions")
+}
+
+model Run {
+  id            String         @id @default(cuid())
+  commitSha     String         @map("commit_sha")
+  environment   RunEnvironment
+  score         Float?
+  status        RunStatus      @default(PENDING)
+  expectedJobs  Int            @default(0) @map("expected_jobs")
+  completedJobs Int            @default(0) @map("completed_jobs")
+  failedJobs    Int            @default(0) @map("failed_jobs")
+
+  /// Set when the run first transitions to RUNNING.
+  startedAt DateTime? @map("started_at")
+  /// Deadline after which the reconciler marks a non-terminal run FAILED.
+  timeoutAt DateTime? @map("timeout_at")
+
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  results       Result[]
+
+  @@index([status, timeoutAt])
+  @@map("runs")
+}
+
+model Result {
+  id         String   @id @default(cuid())
+  runId      String   @map("run_id")
+  run        Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  promptName String   @map("prompt_name")
+  testName   String   @map("test_name")
+  pass       Boolean
+  driftScore Float    @map("drift_score")
+  reasoning  String
+  latencyMs  Int      @map("latency_ms")
+  tokensUsed Int      @map("tokens_used")
+
+  /// Which layer decided this case: a local zero-token check, or the LLM judge.
+  assertionType    AssertionType @default(SEMANTIC) @map("assertion_type")
+  estimatedCostUsd Float?        @map("estimated_cost_usd")
+
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([runId])
+  @@index([promptName])
+  @@map("results")
+}
