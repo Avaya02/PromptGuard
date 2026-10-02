@@ -1,6 +1,6 @@
 import chalk from "chalk";
 
-import type { PromptEvaluationResult } from "@promptguard/evaluator";
+import type { PromptEvaluationResult } from "@diditbreak/evaluator";
 
 import { summarize } from "./summarize.js";
 

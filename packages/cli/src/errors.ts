@@ -5,12 +5,12 @@
  * the indented `hint`, so failures explain the next action rather than leaking
  * a raw `ENOENT` stack.
  */
-export class PromptGuardCliError extends Error {
+export class CliError extends Error {
   readonly hint: string;
 
   constructor(message: string, hint: string) {
     super(message);
-    this.name = "PromptGuardCliError";
+    this.name = "CliError";
     this.hint = hint;
   }
 }

@@ -1,6 +1,6 @@
 import { ChevronDown } from "lucide-react";
 
-import type { RunResultRecord } from "@promptguard/shared-types";
+import type { RunResultRecord } from "@diditbreak/shared-types";
 
 interface FailureCardProps {
   record: RunResultRecord;

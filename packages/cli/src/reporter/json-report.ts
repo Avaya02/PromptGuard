@@ -1,4 +1,4 @@
-import type { PromptEvaluationResult } from "@promptguard/evaluator";
+import type { PromptEvaluationResult } from "@diditbreak/evaluator";
 
 import { summarize, type RunSummaryStats } from "./summarize.js";
 

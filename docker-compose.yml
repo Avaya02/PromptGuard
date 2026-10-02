@@ -1,30 +1,30 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: promptguard-postgres
+    container_name: diditbreak-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: promptguard
-      POSTGRES_PASSWORD: promptguard
-      POSTGRES_DB: promptguard
+      POSTGRES_USER: diditbreak
+      POSTGRES_PASSWORD: diditbreak
+      POSTGRES_DB: diditbreak
     ports:
       - "5433:5432"
     volumes:
-      - promptguard-postgres:/var/lib/postgresql/data
+      - diditbreak-postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U promptguard -d promptguard"]
+      test: ["CMD-SHELL", "pg_isready -U diditbreak -d diditbreak"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   redis:
     image: redis:7-alpine
-    container_name: promptguard-redis
+    container_name: diditbreak-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
-      - promptguard-redis:/data
+      - diditbreak-redis:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -35,12 +35,12 @@ services:
     build:
       context: .
       dockerfile: apps/api-server/Dockerfile
-    container_name: promptguard-api
+    container_name: diditbreak-api
     restart: unless-stopped
     environment:
       # Service names resolve on the compose network, so the internal port is
       # 5432 even though the host maps it to 5433.
-      DATABASE_URL: postgresql://promptguard:promptguard@postgres:5432/promptguard?schema=public
+      DATABASE_URL: postgresql://diditbreak:diditbreak@postgres:5432/diditbreak?schema=public
       REDIS_URL: redis://redis:6379
       HOST: 0.0.0.0
       PORT: "4000"
@@ -56,10 +56,10 @@ services:
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
-    container_name: promptguard-worker
+    container_name: diditbreak-worker
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://promptguard:promptguard@postgres:5432/promptguard?schema=public
+      DATABASE_URL: postgresql://diditbreak:diditbreak@postgres:5432/diditbreak?schema=public
       REDIS_URL: redis://redis:6379
     depends_on:
       postgres:
@@ -74,7 +74,7 @@ services:
     build:
       context: .
       dockerfile: apps/web-dashboard/Dockerfile
-    container_name: promptguard-web
+    container_name: diditbreak-web
     restart: unless-stopped
     ports:
       - "3000:80"
@@ -82,5 +82,5 @@ services:
       - api-server
 
 volumes:
-  promptguard-postgres:
-  promptguard-redis:
+  diditbreak-postgres:
+  diditbreak-redis:

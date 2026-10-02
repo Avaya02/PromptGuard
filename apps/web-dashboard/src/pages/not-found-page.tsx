@@ -10,7 +10,7 @@ export function NotFoundPage(): JSX.Element {
     <div className="space-y-4">
       <EmptyState
         title="Page not found"
-        description="This route does not exist in PromptGuard dashboard."
+        description="This route does not exist in diditbreak dashboard."
       />
       <Link
         to="/"

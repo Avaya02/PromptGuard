@@ -76,7 +76,7 @@ export function RunResultPage(): JSX.Element {
         description="The dashboard reached for run details and did not get them back."
         steps={[
           "Confirm the API server is running (GET /health should return status ok).",
-          "Check VITE_PROMPTGUARD_API_URL points at that server.",
+          "Check VITE_DIDITBREAK_API_URL points at that server.",
           "Verify this run id still exists — it may have been deleted."
         ]}
         onRetry={() => void runViewQuery.refetch()}

@@ -40,14 +40,16 @@ jobs:
       - name: Install
         run: corepack pnpm install --frozen-lockfile
 
+      # Build first: workspace packages resolve each other through dist/, so a
+      # typecheck on a fresh checkout cannot find their type declarations.
+      - name: Build
+        run: corepack pnpm -r build
+
       - name: Typecheck
         run: corepack pnpm -r typecheck
 
       - name: Lint
         run: corepack pnpm -r lint
-
-      - name: Build
-        run: corepack pnpm -r build
 
       # No API keys are set in this job, so MockProvider is the only provider
       # that can be constructed. Any accidental live call would fail loudly.
@@ -83,13 +85,13 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: promptguard
-          POSTGRES_PASSWORD: promptguard
-          POSTGRES_DB: promptguard
+          POSTGRES_USER: diditbreak
+          POSTGRES_PASSWORD: diditbreak
+          POSTGRES_DB: diditbreak
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U promptguard"
+          --health-cmd "pg_isready -U diditbreak"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -105,7 +107,7 @@ jobs:
           --health-retries 10
 
     env:
-      DATABASE_URL: postgresql://promptguard:promptguard@127.0.0.1:5432/promptguard?schema=public
+      DATABASE_URL: postgresql://diditbreak:diditbreak@127.0.0.1:5432/diditbreak?schema=public
       REDIS_URL: redis://127.0.0.1:6379
 
     steps:
@@ -127,15 +129,15 @@ jobs:
       # Proves the migrations actually apply to a real PostgreSQL instance,
       # which the in-memory route tests cannot cover.
       - name: Apply migrations
-        run: corepack pnpm --filter @promptguard/api-server prisma:deploy
+        run: corepack pnpm --filter @diditbreak/api-server prisma:deploy
 
       - name: Seed demo data
-        run: corepack pnpm --filter @promptguard/api-server seed
+        run: corepack pnpm --filter @diditbreak/api-server seed
 
       - name: Integration tests
         run: |
-          corepack pnpm --filter @promptguard/api-server test
-          corepack pnpm --filter @promptguard/worker test
+          corepack pnpm --filter @diditbreak/api-server test
+          corepack pnpm --filter @diditbreak/worker test
 
   regression-demo:
     name: Prompt regression suite (zero cost)
@@ -172,17 +174,28 @@ jobs:
           mkdir -p /tmp/new-user && cd /tmp/new-user
           git init -q
           npm init -y > /dev/null
-          npm install --no-audit --no-fund /tmp/pkg/promptguard-*.tgz
+          npm install --no-audit --no-fund /tmp/pkg/diditbreak-*.tgz
 
-          npx promptguard --version
-          npx promptguard init
-          npx promptguard test          # a fresh project must pass first time
-          npx promptguard doctor
-          npx promptguard test --json | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{if(JSON.parse(d).pass!==true)process.exit(1)})'
+          npx diditbreak --version
+
+          # Prompt suite: a fresh project must pass first time.
+          npx diditbreak init --prompts
+          npx diditbreak test
+          npx diditbreak doctor
+          npx diditbreak test --json | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{if(JSON.parse(d).pass!==true)process.exit(1)})'
+
+          # Agent experiments, free via the mock agent: the demo's CLAUDE.md
+          # edit contradicts the project, so compare must flag it and exit 1.
+          npx diditbreak init --demo demo
+          cd demo
+          set +e; npx --prefix /tmp/new-user diditbreak compare --agent mock --yes; code=$?; set -e
+          test "$code" -eq 1
+          npx --prefix /tmp/new-user diditbreak report --json | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{const v=JSON.parse(d).summary.comparisons.find(c=>c.variant==="working");if(v.verdict!=="worse")process.exit(1)})'
+          cd ..
 
           # Setup errors must exit 2, distinct from a regression (1).
           mkdir -p /tmp/empty && cd /tmp/empty
-          set +e; npx --prefix /tmp/new-user promptguard test; code=$?; set -e
+          set +e; npx --prefix /tmp/new-user diditbreak test; code=$?; set -e
           test "$code" -eq 2
 
       # MockProvider plus deterministic assertions: no network, no API key,

@@ -1,10 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
-import { definePrompt, readPromptRegistry } from "@promptguard/sdk";
+import { definePrompt, readPromptRegistry } from "@diditbreak/sdk";
 import chalk from "chalk";
 
-import { PromptGuardCliError, isFileNotFound } from "../errors.js";
+import { CliError, isFileNotFound } from "../errors.js";
 
 export interface AddCommandArgs {
   name: string;
@@ -32,7 +32,7 @@ async function resolveContent(cwd: string, args: AddCommandArgs): Promise<string
       return await readFile(resolve(cwd, args.file), "utf-8");
     } catch (error) {
       if (isFileNotFound(error)) {
-        throw new PromptGuardCliError(
+        throw new CliError(
           `Prompt file not found: ${args.file}`,
           "Pass a path to a file containing the prompt text, or use --content \"...\"."
         );
@@ -41,14 +41,14 @@ async function resolveContent(cwd: string, args: AddCommandArgs): Promise<string
     }
   }
 
-  // Piped input (`cat prompt.md | promptguard add name`) is the third source.
+  // Piped input (`cat prompt.md | diditbreak add name`) is the third source.
   if (!process.stdin.isTTY) {
     return readStdin();
   }
 
-  throw new PromptGuardCliError(
+  throw new CliError(
     "No prompt content given.",
-    "Use `promptguard add <name> <file>`, `--content \"...\"`, or pipe the text on stdin."
+    "Use `diditbreak add <name> <file>`, `--content \"...\"`, or pipe the text on stdin."
   );
 }
 
@@ -67,7 +67,7 @@ export async function runAddCommand(args: AddCommandArgs): Promise<number> {
     const content = (await resolveContent(cwd, args)).replace(/\s+$/, "");
 
     if (content.length === 0) {
-      throw new PromptGuardCliError(
+      throw new CliError(
         "Prompt content is empty.",
         "Check the file or --content value; an empty prompt cannot be tested."
       );
@@ -88,7 +88,7 @@ export async function runAddCommand(args: AddCommandArgs): Promise<number> {
 
     return 0;
   } catch (error) {
-    if (error instanceof PromptGuardCliError) {
+    if (error instanceof CliError) {
       console.error(`${chalk.red("✗")} ${error.message}\n  ${error.hint}`);
       return 1;
     }

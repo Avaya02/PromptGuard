@@ -1,4 +1,4 @@
-import type { JudgeInput } from "@promptguard/shared-types";
+import type { JudgeInput } from "@diditbreak/shared-types";
 
 export function buildJudgePrompt(context: JudgeInput): string {
   if (context.expect) {

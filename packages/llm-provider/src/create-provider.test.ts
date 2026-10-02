@@ -14,7 +14,7 @@ afterEach(() => {
 
 describe("createProvider", () => {
   it("defaults to MockProvider when no config is supplied", () => {
-    // This is what makes a zero-config `prompt-guard test` work with no keys.
+    // This is what makes a zero-config `diditbreak test` work with no keys.
     expect(createProvider()).toBeInstanceOf(MockProvider);
   });
 

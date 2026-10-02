@@ -1,5 +1,5 @@
-import type { LLMProvider } from "@promptguard/llm-provider";
-import type { EvaluationResult, NamedTestCase } from "@promptguard/shared-types";
+import type { LLMProvider } from "@diditbreak/llm-provider";
+import type { EvaluationResult, NamedTestCase } from "@diditbreak/shared-types";
 
 export type EvaluationTestCase = NamedTestCase;
 

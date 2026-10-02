@@ -1,6 +1,6 @@
 import type { Ora } from "ora";
 
-import type { RunSummary } from "@promptguard/shared-types";
+import type { RunSummary } from "@diditbreak/shared-types";
 
 import { fetchRemoteRun } from "./client.js";
 

@@ -3,7 +3,7 @@ import type {
   RunResultRecord,
   RunSummary,
   RunViewResponse
-} from "@promptguard/shared-types";
+} from "@diditbreak/shared-types";
 
 export interface PromptListItem {
   id: string;

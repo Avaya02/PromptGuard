@@ -12,7 +12,7 @@ let out: string[];
 
 beforeEach(async () => {
   originalCwd = process.cwd();
-  cwd = await mkdtemp(join(tmpdir(), "promptguard-add-"));
+  cwd = await mkdtemp(join(tmpdir(), "diditbreak-add-"));
   process.chdir(cwd);
   out = [];
   vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => out.push(args.join(" ")));
@@ -26,7 +26,7 @@ afterEach(async () => {
 });
 
 async function registry(): Promise<Array<{ name: string; content: string; version: number }>> {
-  return JSON.parse(await readFile(join(cwd, ".promptguard/prompts.json"), "utf-8")).prompts;
+  return JSON.parse(await readFile(join(cwd, ".diditbreak/prompts.json"), "utf-8")).prompts;
 }
 
 describe("runAddCommand", () => {

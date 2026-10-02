@@ -1,6 +1,6 @@
-# PromptGuard Codebase Walkthrough
+# diditbreak Codebase Walkthrough
 
-This document is a practical operator-level walkthrough of the current codebase in `/Applications/Projects/PromptGuard`.
+This document is a practical operator-level walkthrough of the current codebase in `/Applications/Projects/diditbreak`.
 
 Use it as:
 - an architecture map,
@@ -12,7 +12,7 @@ Use it as:
 
 ## 1. What This System Does
 
-PromptGuard detects **behavioral regressions** in prompts.
+diditbreak detects **behavioral regressions** in prompts.
 
 It supports two execution modes:
 
@@ -48,11 +48,11 @@ packages/
 ```
 
 Workspace and toolchain:
-- Workspace config: `/Applications/Projects/PromptGuard/pnpm-workspace.yaml`
-- Root scripts + shared dev tooling: `/Applications/Projects/PromptGuard/package.json`
-- Base strict TS config: `/Applications/Projects/PromptGuard/tsconfig.json`
-- ESLint flat config: `/Applications/Projects/PromptGuard/eslint.config.mjs`
-- Infra compose: `/Applications/Projects/PromptGuard/docker-compose.yml`
+- Workspace config: `/Applications/Projects/diditbreak/pnpm-workspace.yaml`
+- Root scripts + shared dev tooling: `/Applications/Projects/diditbreak/package.json`
+- Base strict TS config: `/Applications/Projects/diditbreak/tsconfig.json`
+- ESLint flat config: `/Applications/Projects/diditbreak/eslint.config.mjs`
+- Infra compose: `/Applications/Projects/diditbreak/docker-compose.yml`
 
 ---
 
@@ -60,14 +60,14 @@ Workspace and toolchain:
 
 ```mermaid
 flowchart LR
-  A["Developer Code + SDK definePrompt"] --> B[".promptguard/prompts.json"]
-  C["prompt_tests/*.json"] --> D["CLI (prompt-guard test)"]
+  A["Developer Code + SDK definePrompt"] --> B[".diditbreak/prompts.json"]
+  C["prompt_tests/*.json"] --> D["CLI (diditbreak test)"]
   B --> D
 
   D -->|"Local Mode"| E["Evaluator + Providers"]
   E --> F["Terminal Report"]
 
-  D -->|"PROMPTGUARD_API_URL set"| G["API POST /runs"]
+  D -->|"DIDITBREAK_API_URL set"| G["API POST /runs"]
   G --> H["Postgres run + prompt versions"]
   G --> I["BullMQ queues"]
   I --> J["Worker prompt-run"]
@@ -85,7 +85,7 @@ flowchart LR
 ## 4. Core Contracts (Single Source of Truth)
 
 All shared contracts live in:
-- `/Applications/Projects/PromptGuard/packages/shared-types/src/index.ts`
+- `/Applications/Projects/diditbreak/packages/shared-types/src/index.ts`
 
 Primary domains defined there:
 - Model config (`ModelConfig`)
@@ -102,35 +102,35 @@ Ownership rule:
 
 ## 5. Package-by-Package Walkthrough
 
-## 5.1 `@promptguard/shared-types`
+## 5.1 `@diditbreak/shared-types`
 
 Path:
-- `/Applications/Projects/PromptGuard/packages/shared-types`
+- `/Applications/Projects/diditbreak/packages/shared-types`
 
 Role:
 - Cross-workspace type contract package.
 - Avoids duplicating runtime payload types across services.
 
 Key file:
-- `/Applications/Projects/PromptGuard/packages/shared-types/src/index.ts`
+- `/Applications/Projects/diditbreak/packages/shared-types/src/index.ts`
 
 ---
 
-## 5.2 `@promptguard/llm-provider`
+## 5.2 `@diditbreak/llm-provider`
 
 Path:
-- `/Applications/Projects/PromptGuard/packages/llm-provider`
+- `/Applications/Projects/diditbreak/packages/llm-provider`
 
 Role:
 - Abstracts generation/judge model integrations.
 
 Important files:
-- Interface: `/Applications/Projects/PromptGuard/packages/llm-provider/src/llm-provider.ts`
-- Ollama impl: `/Applications/Projects/PromptGuard/packages/llm-provider/src/providers/local-ollama-provider.ts`
-- OpenAI impl: `/Applications/Projects/PromptGuard/packages/llm-provider/src/providers/openai-provider.ts`
-- Mock impl: `/Applications/Projects/PromptGuard/packages/llm-provider/src/providers/mock-provider.ts`
-- Judge prompt builder: `/Applications/Projects/PromptGuard/packages/llm-provider/src/utils/judge-prompt.ts`
-- Judge JSON parser: `/Applications/Projects/PromptGuard/packages/llm-provider/src/utils/parse-judge-result.ts`
+- Interface: `/Applications/Projects/diditbreak/packages/llm-provider/src/llm-provider.ts`
+- Ollama impl: `/Applications/Projects/diditbreak/packages/llm-provider/src/providers/local-ollama-provider.ts`
+- OpenAI impl: `/Applications/Projects/diditbreak/packages/llm-provider/src/providers/openai-provider.ts`
+- Mock impl: `/Applications/Projects/diditbreak/packages/llm-provider/src/providers/mock-provider.ts`
+- Judge prompt builder: `/Applications/Projects/diditbreak/packages/llm-provider/src/utils/judge-prompt.ts`
+- Judge JSON parser: `/Applications/Projects/diditbreak/packages/llm-provider/src/utils/parse-judge-result.ts`
 
 Notes:
 - `LocalOllamaProvider` hits `POST /api/generate` on `http://127.0.0.1:11434` by default.
@@ -139,10 +139,10 @@ Notes:
 
 ---
 
-## 5.3 `@promptguard/evaluator`
+## 5.3 `@diditbreak/evaluator`
 
 Path:
-- `/Applications/Projects/PromptGuard/packages/evaluator`
+- `/Applications/Projects/diditbreak/packages/evaluator`
 
 Role:
 - Core orchestration for semantic evaluation per prompt.
@@ -154,33 +154,33 @@ Flow:
 4. Aggregate to prompt-level drift score and pass/fail via threshold.
 
 Important files:
-- Public orchestrator: `/Applications/Projects/PromptGuard/packages/evaluator/src/run-evaluation.ts`
-- Per-case execution: `/Applications/Projects/PromptGuard/packages/evaluator/src/runner/evaluate-case.ts`
-- Rubric prompt shaping: `/Applications/Projects/PromptGuard/packages/evaluator/src/prompts/judge-templates.ts`
-- Types: `/Applications/Projects/PromptGuard/packages/evaluator/src/types.ts`
+- Public orchestrator: `/Applications/Projects/diditbreak/packages/evaluator/src/run-evaluation.ts`
+- Per-case execution: `/Applications/Projects/diditbreak/packages/evaluator/src/runner/evaluate-case.ts`
+- Rubric prompt shaping: `/Applications/Projects/diditbreak/packages/evaluator/src/prompts/judge-templates.ts`
+- Types: `/Applications/Projects/diditbreak/packages/evaluator/src/types.ts`
 
 Behavioral detail:
 - Prompt passes when `failedTests / totalTests <= threshold`.
 
 ---
 
-## 5.4 `@promptguard/sdk`
+## 5.4 `@diditbreak/sdk`
 
 Path:
-- `/Applications/Projects/PromptGuard/packages/sdk`
+- `/Applications/Projects/diditbreak/packages/sdk`
 
 Role:
 - Prompt registration and registry IO.
 
 Registry file:
-- `.promptguard/prompts.json`
+- `.diditbreak/prompts.json`
 
 Important files:
-- Registration API: `/Applications/Projects/PromptGuard/packages/sdk/src/define-prompt.ts`
-- Registry read API: `/Applications/Projects/PromptGuard/packages/sdk/src/read-prompt-registry.ts`
-- Storage primitives: `/Applications/Projects/PromptGuard/packages/sdk/src/registry/storage.ts`
-- Hashing: `/Applications/Projects/PromptGuard/packages/sdk/src/registry/hash.ts`
-- Zod schema: `/Applications/Projects/PromptGuard/packages/sdk/src/registry/schema.ts`
+- Registration API: `/Applications/Projects/diditbreak/packages/sdk/src/define-prompt.ts`
+- Registry read API: `/Applications/Projects/diditbreak/packages/sdk/src/read-prompt-registry.ts`
+- Storage primitives: `/Applications/Projects/diditbreak/packages/sdk/src/registry/storage.ts`
+- Hashing: `/Applications/Projects/diditbreak/packages/sdk/src/registry/hash.ts`
+- Zod schema: `/Applications/Projects/diditbreak/packages/sdk/src/registry/schema.ts`
 
 Behavior:
 - `definePrompt(name, content)` computes SHA-256 hash.
@@ -189,40 +189,40 @@ Behavior:
 
 ---
 
-## 5.5 `prompt-guard` CLI
+## 5.5 `diditbreak` CLI
 
 Path:
-- `/Applications/Projects/PromptGuard/packages/cli`
+- `/Applications/Projects/diditbreak/packages/cli`
 
 Role:
 - User entrypoint and orchestration layer.
 
 Entrypoints:
-- Bin: `/Applications/Projects/PromptGuard/packages/cli/src/bin/prompt-guard.ts`
-- Command router: `/Applications/Projects/PromptGuard/packages/cli/src/index.ts`
-- Main command: `/Applications/Projects/PromptGuard/packages/cli/src/commands/test-command.ts`
+- Bin: `/Applications/Projects/diditbreak/packages/cli/src/bin/diditbreak.ts`
+- Command router: `/Applications/Projects/diditbreak/packages/cli/src/index.ts`
+- Main command: `/Applications/Projects/diditbreak/packages/cli/src/commands/test-command.ts`
 
 Config/test loading:
-- Config loader: `/Applications/Projects/PromptGuard/packages/cli/src/config/load-config.ts`
-- Test loader: `/Applications/Projects/PromptGuard/packages/cli/src/tests/load-test-cases.ts`
-- Current prompts: `/Applications/Projects/PromptGuard/packages/cli/src/prompts/load-current-prompts.ts`
-- Baseline prompts via git show: `/Applications/Projects/PromptGuard/packages/cli/src/prompts/load-baseline-prompts.ts`
+- Config loader: `/Applications/Projects/diditbreak/packages/cli/src/config/load-config.ts`
+- Test loader: `/Applications/Projects/diditbreak/packages/cli/src/tests/load-test-cases.ts`
+- Current prompts: `/Applications/Projects/diditbreak/packages/cli/src/prompts/load-current-prompts.ts`
+- Baseline prompts via git show: `/Applications/Projects/diditbreak/packages/cli/src/prompts/load-baseline-prompts.ts`
 
 Execution branches:
-- Local mode: `/Applications/Projects/PromptGuard/packages/cli/src/commands/run-local-mode.ts`
-- Remote mode: `/Applications/Projects/PromptGuard/packages/cli/src/commands/run-remote-mode.ts`
+- Local mode: `/Applications/Projects/diditbreak/packages/cli/src/commands/run-local-mode.ts`
+- Remote mode: `/Applications/Projects/diditbreak/packages/cli/src/commands/run-remote-mode.ts`
 
 Remote helpers:
-- API client: `/Applications/Projects/PromptGuard/packages/cli/src/api/client.ts`
-- Poll loop: `/Applications/Projects/PromptGuard/packages/cli/src/api/poll-run.ts`
-- Response schemas: `/Applications/Projects/PromptGuard/packages/cli/src/api/schemas.ts`
-- Commit SHA resolver: `/Applications/Projects/PromptGuard/packages/cli/src/git/resolve-commit-sha.ts`
+- API client: `/Applications/Projects/diditbreak/packages/cli/src/api/client.ts`
+- Poll loop: `/Applications/Projects/diditbreak/packages/cli/src/api/poll-run.ts`
+- Response schemas: `/Applications/Projects/diditbreak/packages/cli/src/api/schemas.ts`
+- Commit SHA resolver: `/Applications/Projects/diditbreak/packages/cli/src/git/resolve-commit-sha.ts`
 
 Reporter:
-- `/Applications/Projects/PromptGuard/packages/cli/src/reporter/print-report.ts`
+- `/Applications/Projects/diditbreak/packages/cli/src/reporter/print-report.ts`
 
 Important mode switch:
-- If `PROMPTGUARD_API_URL` exists, CLI uses remote/API mode.
+- If `DIDITBREAK_API_URL` exists, CLI uses remote/API mode.
 - Else CLI runs local in-memory evaluation.
 
 ---
@@ -232,14 +232,14 @@ Important mode switch:
 ## 6.1 API Server (`apps/api-server`)
 
 Path:
-- `/Applications/Projects/PromptGuard/apps/api-server`
+- `/Applications/Projects/diditbreak/apps/api-server`
 
 Stack:
 - Fastify + Prisma + BullMQ
 
 ### Data model
-- Prisma schema: `/Applications/Projects/PromptGuard/apps/api-server/prisma/schema.prisma`
-- Migration: `/Applications/Projects/PromptGuard/apps/api-server/prisma/migrations/20260220000000_init/migration.sql`
+- Prisma schema: `/Applications/Projects/diditbreak/apps/api-server/prisma/schema.prisma`
+- Migration: `/Applications/Projects/diditbreak/apps/api-server/prisma/migrations/20260220000000_init/migration.sql`
 
 Tables (mapped models):
 - `prompts`
@@ -248,16 +248,16 @@ Tables (mapped models):
 - `results`
 
 ### Startup and dependency wiring
-- Env parse: `/Applications/Projects/PromptGuard/apps/api-server/src/env.ts`
-- Prisma singleton: `/Applications/Projects/PromptGuard/apps/api-server/src/lib/prisma.ts`
-- BullMQ connection options: `/Applications/Projects/PromptGuard/apps/api-server/src/lib/redis.ts`
-- Queue instances: `/Applications/Projects/PromptGuard/apps/api-server/src/lib/queues.ts`
-- App factory: `/Applications/Projects/PromptGuard/apps/api-server/src/app.ts`
-- Bootstrap: `/Applications/Projects/PromptGuard/apps/api-server/src/server.ts`
+- Env parse: `/Applications/Projects/diditbreak/apps/api-server/src/env.ts`
+- Prisma singleton: `/Applications/Projects/diditbreak/apps/api-server/src/lib/prisma.ts`
+- BullMQ connection options: `/Applications/Projects/diditbreak/apps/api-server/src/lib/redis.ts`
+- Queue instances: `/Applications/Projects/diditbreak/apps/api-server/src/lib/queues.ts`
+- App factory: `/Applications/Projects/diditbreak/apps/api-server/src/app.ts`
+- Bootstrap: `/Applications/Projects/diditbreak/apps/api-server/src/server.ts`
 
 ### Routes
-- Run routes: `/Applications/Projects/PromptGuard/apps/api-server/src/routes/runs.ts`
-- Prompt routes: `/Applications/Projects/PromptGuard/apps/api-server/src/routes/prompts.ts`
+- Run routes: `/Applications/Projects/diditbreak/apps/api-server/src/routes/runs.ts`
+- Prompt routes: `/Applications/Projects/diditbreak/apps/api-server/src/routes/prompts.ts`
 
 Endpoints:
 1. `POST /runs`
@@ -283,101 +283,101 @@ Endpoints:
 - Returns runs linked to prompt via results.
 
 ### Utilities
-- Hash helper: `/Applications/Projects/PromptGuard/apps/api-server/src/utils/hash.ts`
-- Summary serializer: `/Applications/Projects/PromptGuard/apps/api-server/src/utils/to-run-summary.ts`
-- Results serializer: `/Applications/Projects/PromptGuard/apps/api-server/src/utils/to-run-results.ts`
-- Prompt diff builder: `/Applications/Projects/PromptGuard/apps/api-server/src/utils/build-prompt-diffs.ts`
+- Hash helper: `/Applications/Projects/diditbreak/apps/api-server/src/utils/hash.ts`
+- Summary serializer: `/Applications/Projects/diditbreak/apps/api-server/src/utils/to-run-summary.ts`
+- Results serializer: `/Applications/Projects/diditbreak/apps/api-server/src/utils/to-run-results.ts`
+- Prompt diff builder: `/Applications/Projects/diditbreak/apps/api-server/src/utils/build-prompt-diffs.ts`
 
 ---
 
 ## 6.2 Worker (`apps/worker`)
 
 Path:
-- `/Applications/Projects/PromptGuard/apps/worker`
+- `/Applications/Projects/diditbreak/apps/worker`
 
 Role:
 - Queue consumers for asynchronous evaluation pipeline.
 
 Boot sequence:
-- `/Applications/Projects/PromptGuard/apps/worker/src/index.ts`
+- `/Applications/Projects/diditbreak/apps/worker/src/index.ts`
 
 Workers:
 1. `prompt-run` worker
-- File: `/Applications/Projects/PromptGuard/apps/worker/src/workers/prompt-run-worker.ts`
+- File: `/Applications/Projects/diditbreak/apps/worker/src/workers/prompt-run-worker.ts`
 - Sets run status to `RUNNING`.
 - Fan-outs to `judge-run` queue.
 
 2. `judge-run` worker
-- File: `/Applications/Projects/PromptGuard/apps/worker/src/workers/judge-run-worker.ts`
+- File: `/Applications/Projects/diditbreak/apps/worker/src/workers/judge-run-worker.ts`
 - Instantiates providers from payload model config.
 - Executes evaluator for one prompt.
 - Replaces old results for `(runId, promptName)` and inserts current results.
 - Calls run finalizer.
 
 Run finalization:
-- `/Applications/Projects/PromptGuard/apps/worker/src/services/finalize-run.ts`
+- `/Applications/Projects/diditbreak/apps/worker/src/services/finalize-run.ts`
 - `markPromptCompleted` increments completed count and finalizes score/status when all jobs done.
 - `markPromptFailed` increments failed+completed and finalizes failure score on last job.
 
 Provider factory:
-- `/Applications/Projects/PromptGuard/apps/worker/src/providers/create-provider.ts`
+- `/Applications/Projects/diditbreak/apps/worker/src/providers/create-provider.ts`
 
 Infra helpers:
-- Env: `/Applications/Projects/PromptGuard/apps/worker/src/env.ts`
-- Prisma: `/Applications/Projects/PromptGuard/apps/worker/src/lib/prisma.ts`
-- Redis options: `/Applications/Projects/PromptGuard/apps/worker/src/lib/redis.ts`
+- Env: `/Applications/Projects/diditbreak/apps/worker/src/env.ts`
+- Prisma: `/Applications/Projects/diditbreak/apps/worker/src/lib/prisma.ts`
+- Redis options: `/Applications/Projects/diditbreak/apps/worker/src/lib/redis.ts`
 
 ---
 
 ## 6.3 Web Dashboard (`apps/web-dashboard`)
 
 Path:
-- `/Applications/Projects/PromptGuard/apps/web-dashboard`
+- `/Applications/Projects/diditbreak/apps/web-dashboard`
 
 Stack:
 - React + Vite + Tailwind + TanStack Query + React Router + Recharts + Monaco
 
 Entry and routing:
-- App bootstrap: `/Applications/Projects/PromptGuard/apps/web-dashboard/src/main.tsx`
-- Router: `/Applications/Projects/PromptGuard/apps/web-dashboard/src/router.tsx`
+- App bootstrap: `/Applications/Projects/diditbreak/apps/web-dashboard/src/main.tsx`
+- Router: `/Applications/Projects/diditbreak/apps/web-dashboard/src/router.tsx`
 
 Global shell/theme:
-- Shell: `/Applications/Projects/PromptGuard/apps/web-dashboard/src/components/layout/dashboard-shell.tsx`
-- CSS/theme tokens: `/Applications/Projects/PromptGuard/apps/web-dashboard/src/styles/index.css`
-- Tailwind config: `/Applications/Projects/PromptGuard/apps/web-dashboard/tailwind.config.ts`
+- Shell: `/Applications/Projects/diditbreak/apps/web-dashboard/src/components/layout/dashboard-shell.tsx`
+- CSS/theme tokens: `/Applications/Projects/diditbreak/apps/web-dashboard/src/styles/index.css`
+- Tailwind config: `/Applications/Projects/diditbreak/apps/web-dashboard/tailwind.config.ts`
 
 Data layer:
-- API base URL: `/Applications/Projects/PromptGuard/apps/web-dashboard/src/lib/env.ts`
-- HTTP wrappers: `/Applications/Projects/PromptGuard/apps/web-dashboard/src/lib/api.ts`
-- Query client: `/Applications/Projects/PromptGuard/apps/web-dashboard/src/lib/query-client.ts`
-- Query hooks: `/Applications/Projects/PromptGuard/apps/web-dashboard/src/hooks/use-data.ts`
+- API base URL: `/Applications/Projects/diditbreak/apps/web-dashboard/src/lib/env.ts`
+- HTTP wrappers: `/Applications/Projects/diditbreak/apps/web-dashboard/src/lib/api.ts`
+- Query client: `/Applications/Projects/diditbreak/apps/web-dashboard/src/lib/query-client.ts`
+- Query hooks: `/Applications/Projects/diditbreak/apps/web-dashboard/src/hooks/use-data.ts`
 
 Pages:
 1. Prompt list
-- `/Applications/Projects/PromptGuard/apps/web-dashboard/src/pages/prompts-list-page.tsx`
+- `/Applications/Projects/diditbreak/apps/web-dashboard/src/pages/prompts-list-page.tsx`
 - Renders cards for each prompt + latest run signal.
 
 2. Prompt detail
-- `/Applications/Projects/PromptGuard/apps/web-dashboard/src/pages/prompt-detail-page.tsx`
+- `/Applications/Projects/diditbreak/apps/web-dashboard/src/pages/prompt-detail-page.tsx`
 - Recharts drift trend + run history links.
 
 3. Run result viewer
-- `/Applications/Projects/PromptGuard/apps/web-dashboard/src/pages/run-result-page.tsx`
+- `/Applications/Projects/diditbreak/apps/web-dashboard/src/pages/run-result-page.tsx`
 - Uses `/runs/:id/view`.
 - Shows semantic diff (Monaco diff editor), result table, and failing case cards.
 - Monaco diff viewer is lazy-loaded for bundle separation.
 
 4. Not found
-- `/Applications/Projects/PromptGuard/apps/web-dashboard/src/pages/not-found-page.tsx`
+- `/Applications/Projects/diditbreak/apps/web-dashboard/src/pages/not-found-page.tsx`
 
 Reusable components:
-- Cards/panels/loading/empty states in `/Applications/Projects/PromptGuard/apps/web-dashboard/src/components/common`
-- Prompt widgets in `/Applications/Projects/PromptGuard/apps/web-dashboard/src/components/prompts`
-- Result widgets in `/Applications/Projects/PromptGuard/apps/web-dashboard/src/components/results`
-- Drift chart in `/Applications/Projects/PromptGuard/apps/web-dashboard/src/components/charts/drift-score-chart.tsx`
+- Cards/panels/loading/empty states in `/Applications/Projects/diditbreak/apps/web-dashboard/src/components/common`
+- Prompt widgets in `/Applications/Projects/diditbreak/apps/web-dashboard/src/components/prompts`
+- Result widgets in `/Applications/Projects/diditbreak/apps/web-dashboard/src/components/results`
+- Drift chart in `/Applications/Projects/diditbreak/apps/web-dashboard/src/components/charts/drift-score-chart.tsx`
 
 Monaco worker setup:
-- `/Applications/Projects/PromptGuard/apps/web-dashboard/src/monaco/setup.ts`
+- `/Applications/Projects/diditbreak/apps/web-dashboard/src/monaco/setup.ts`
 
 ---
 
@@ -385,22 +385,22 @@ Monaco worker setup:
 
 ## 7.1 Local CLI sequence
 
-1. `prompt-guard test [--base <ref>]`
-2. Load config from `promptguard.config.ts`.
-3. Read prompt registry from `.promptguard/prompts.json`.
+1. `diditbreak test [--base <ref>]`
+2. Load config from `diditbreak.config.ts`.
+3. Read prompt registry from `.diditbreak/prompts.json`.
 4. Load JSON test cases from `testsDir`.
-5. Resolve baseline prompts via `git show <base>:.promptguard/prompts.json` (if provided).
+5. Resolve baseline prompts via `git show <base>:.diditbreak/prompts.json` (if provided).
 6. Evaluate each prompt through evaluator + providers.
 7. Print report table and return exit code.
 
 Key file path chain:
-- `/Applications/Projects/PromptGuard/packages/cli/src/commands/test-command.ts`
-- `/Applications/Projects/PromptGuard/packages/cli/src/commands/run-local-mode.ts`
-- `/Applications/Projects/PromptGuard/packages/evaluator/src/run-evaluation.ts`
+- `/Applications/Projects/diditbreak/packages/cli/src/commands/test-command.ts`
+- `/Applications/Projects/diditbreak/packages/cli/src/commands/run-local-mode.ts`
+- `/Applications/Projects/diditbreak/packages/evaluator/src/run-evaluation.ts`
 
 ## 7.2 Remote/CI sequence
 
-1. CLI detects `PROMPTGUARD_API_URL`.
+1. CLI detects `DIDITBREAK_API_URL`.
 2. Builds `CreateRunRequest` payload.
 3. `POST /runs`.
 4. API stores run + prompt versions and enqueues jobs.
@@ -410,9 +410,9 @@ Key file path chain:
 8. CLI fetches `/runs/:id/results` and prints report.
 
 Key path chain:
-- `/Applications/Projects/PromptGuard/packages/cli/src/commands/run-remote-mode.ts`
-- `/Applications/Projects/PromptGuard/apps/api-server/src/routes/runs.ts`
-- `/Applications/Projects/PromptGuard/apps/worker/src/index.ts`
+- `/Applications/Projects/diditbreak/packages/cli/src/commands/run-remote-mode.ts`
+- `/Applications/Projects/diditbreak/apps/api-server/src/routes/runs.ts`
+- `/Applications/Projects/diditbreak/apps/worker/src/index.ts`
 
 ## 7.3 Dashboard sequence
 
@@ -425,21 +425,21 @@ Key path chain:
 
 ## 8. Environment Variables
 
-API server (`/Applications/Projects/PromptGuard/apps/api-server/.env.example`):
+API server (`/Applications/Projects/diditbreak/apps/api-server/.env.example`):
 - `DATABASE_URL`
 - `REDIS_URL`
 - `HOST`
 - `PORT`
 
-Worker (`/Applications/Projects/PromptGuard/apps/worker/.env.example`):
+Worker (`/Applications/Projects/diditbreak/apps/worker/.env.example`):
 - `DATABASE_URL`
 - `REDIS_URL`
 
-Dashboard (`/Applications/Projects/PromptGuard/apps/web-dashboard/.env.example`):
-- `VITE_PROMPTGUARD_API_URL`
+Dashboard (`/Applications/Projects/diditbreak/apps/web-dashboard/.env.example`):
+- `VITE_DIDITBREAK_API_URL`
 
 CLI (runtime behavior switch):
-- `PROMPTGUARD_API_URL` (set => remote mode)
+- `DIDITBREAK_API_URL` (set => remote mode)
 - `OPENAI_API_KEY` (if using OpenAI provider)
 
 ---
@@ -452,26 +452,26 @@ Workspace-wide:
 - `corepack pnpm -r lint`
 
 Per app/package examples:
-- `corepack pnpm --filter prompt-guard build`
-- `corepack pnpm --filter @promptguard/api-server dev`
-- `corepack pnpm --filter @promptguard/worker dev`
-- `corepack pnpm --filter @promptguard/web-dashboard dev`
+- `corepack pnpm --filter diditbreak build`
+- `corepack pnpm --filter @diditbreak/api-server dev`
+- `corepack pnpm --filter @diditbreak/worker dev`
+- `corepack pnpm --filter @diditbreak/web-dashboard dev`
 
 ---
 
 ## 10. What to Change for Common Requests
 
 1. **Add a new model provider**
-- Add provider in `/Applications/Projects/PromptGuard/packages/llm-provider/src/providers`
-- Export in `/Applications/Projects/PromptGuard/packages/llm-provider/src/index.ts`
+- Add provider in `/Applications/Projects/diditbreak/packages/llm-provider/src/providers`
+- Export in `/Applications/Projects/diditbreak/packages/llm-provider/src/index.ts`
 - Wire provider selection in:
-  - `/Applications/Projects/PromptGuard/packages/cli/src/providers/create-provider.ts`
-  - `/Applications/Projects/PromptGuard/apps/worker/src/providers/create-provider.ts`
+  - `/Applications/Projects/diditbreak/packages/cli/src/providers/create-provider.ts`
+  - `/Applications/Projects/diditbreak/apps/worker/src/providers/create-provider.ts`
 
 2. **Change evaluation scoring logic**
 - Update:
-  - `/Applications/Projects/PromptGuard/packages/evaluator/src/run-evaluation.ts`
-  - `/Applications/Projects/PromptGuard/packages/evaluator/src/runner/evaluate-case.ts`
+  - `/Applications/Projects/diditbreak/packages/evaluator/src/run-evaluation.ts`
+  - `/Applications/Projects/diditbreak/packages/evaluator/src/runner/evaluate-case.ts`
 
 3. **Add API fields to run/results**
 - Update contracts in shared types first.
@@ -479,13 +479,13 @@ Per app/package examples:
 - Then worker writes and dashboard reads.
 
 4. **Change queue topology**
-- Queue names in `/Applications/Projects/PromptGuard/packages/shared-types/src/index.ts`
-- API queue creation in `/Applications/Projects/PromptGuard/apps/api-server/src/lib/queues.ts`
-- Worker consumers in `/Applications/Projects/PromptGuard/apps/worker/src/index.ts`
+- Queue names in `/Applications/Projects/diditbreak/packages/shared-types/src/index.ts`
+- API queue creation in `/Applications/Projects/diditbreak/apps/api-server/src/lib/queues.ts`
+- Worker consumers in `/Applications/Projects/diditbreak/apps/worker/src/index.ts`
 
 5. **Change dashboard views**
-- Routes in `/Applications/Projects/PromptGuard/apps/web-dashboard/src/router.tsx`
-- Data hooks in `/Applications/Projects/PromptGuard/apps/web-dashboard/src/hooks/use-data.ts`
+- Routes in `/Applications/Projects/diditbreak/apps/web-dashboard/src/router.tsx`
+- Data hooks in `/Applications/Projects/diditbreak/apps/web-dashboard/src/hooks/use-data.ts`
 
 ---
 
@@ -510,7 +510,7 @@ Per app/package examples:
 Use this as a release gate before pushing changes.
 
 ## A. Contracts and type safety
-- [ ] Shared contract edits happen first in `/Applications/Projects/PromptGuard/packages/shared-types/src/index.ts`.
+- [ ] Shared contract edits happen first in `/Applications/Projects/diditbreak/packages/shared-types/src/index.ts`.
 - [ ] All impacted apps/packages compile with strict mode.
 
 ## B. Behavioral correctness
@@ -566,16 +566,16 @@ Then enforce this rule:
 - `docker compose up -d`
 
 3. Migrate/generate Prisma:
-- `corepack pnpm --filter @promptguard/api-server prisma:migrate`
+- `corepack pnpm --filter @diditbreak/api-server prisma:migrate`
 
 4. Start backend services:
-- `corepack pnpm --filter @promptguard/api-server dev`
-- `corepack pnpm --filter @promptguard/worker dev`
+- `corepack pnpm --filter @diditbreak/api-server dev`
+- `corepack pnpm --filter @diditbreak/worker dev`
 
 5. Run CLI:
-- Local mode: `corepack pnpm --filter prompt-guard exec prompt-guard test --base main`
-- Remote mode: set `PROMPTGUARD_API_URL` then run same command.
+- Local mode: `corepack pnpm --filter diditbreak exec diditbreak test --base main`
+- Remote mode: set `DIDITBREAK_API_URL` then run same command.
 
 6. Start dashboard:
-- `corepack pnpm --filter @promptguard/web-dashboard dev`
+- `corepack pnpm --filter @diditbreak/web-dashboard dev`
 

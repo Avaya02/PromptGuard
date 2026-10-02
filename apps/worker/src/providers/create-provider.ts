@@ -1,1 +1,1 @@
-export { createProvider } from "@promptguard/llm-provider";
+export { createProvider } from "@diditbreak/llm-provider";

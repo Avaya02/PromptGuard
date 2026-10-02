@@ -5,11 +5,11 @@ import { defineConfig } from "tsup";
  *
  * Everything is inlined, including third-party dependencies, so installing the
  * CLI fetches a single tarball instead of ~70 packages. That is the difference
- * between a ~1s and a ~10s cold `npx promptguard`, and it leaves no transitive
+ * between a ~1s and a ~10s cold `npx diditbreak`, and it leaves no transitive
  * dependency tree to audit.
  */
 export default defineConfig({
-  entry: { cli: "src/bin/prompt-guard.ts" },
+  entry: { cli: "src/bin/diditbreak.ts" },
   format: ["esm"],
   platform: "node",
   target: "node20",

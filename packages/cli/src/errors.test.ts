@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { PromptGuardCliError, isFileNotFound } from "./errors.js";
+import { CliError, isFileNotFound } from "./errors.js";
 
-describe("PromptGuardCliError", () => {
+describe("CliError", () => {
   it("carries a message and a remediation hint", () => {
-    const error = new PromptGuardCliError("something broke", "try this instead");
+    const error = new CliError("something broke", "try this instead");
 
     expect(error.message).toBe("something broke");
     expect(error.hint).toBe("try this instead");
     expect(error).toBeInstanceOf(Error);
-    expect(error.name).toBe("PromptGuardCliError");
+    expect(error.name).toBe("CliError");
   });
 });
 

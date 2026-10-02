@@ -1,5 +1,5 @@
-import { runEvaluation } from "@promptguard/evaluator";
-import { createProvider } from "@promptguard/llm-provider";
+import { runEvaluation } from "@diditbreak/evaluator";
+import { createProvider } from "@diditbreak/llm-provider";
 import type { FastifyInstance } from "fastify";
 
 import { evaluateRequestSchema } from "../schemas/runs.js";

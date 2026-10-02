@@ -1,4 +1,4 @@
-import type { PromptEvaluationResult } from "@promptguard/evaluator";
+import type { PromptEvaluationResult } from "@diditbreak/evaluator";
 import chalk from "chalk";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 

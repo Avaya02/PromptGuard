@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 
-import type { RegisteredPrompt } from "@promptguard/shared-types";
+import type { RegisteredPrompt } from "@diditbreak/shared-types";
 
 import { DEFAULT_REGISTRY_PATH, readRegistryFile } from "./registry/storage.js";
 

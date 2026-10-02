@@ -1,4 +1,4 @@
-import { assertionSchema } from "@promptguard/shared-types";
+import { assertionSchema } from "@diditbreak/shared-types";
 import { z } from "zod";
 
 const modelConfigSchema = z.object({

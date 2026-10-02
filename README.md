@@ -1,214 +1,170 @@
-# PromptGuard
+# diditbreak
 
 [![CI](https://github.com/Avaya02/PromptGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/Avaya02/PromptGuard/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/promptguard)](https://www.npmjs.com/package/promptguard)
+[![npm](https://img.shields.io/npm/v/diditbreak)](https://www.npmjs.com/package/diditbreak)
 
-**Regression tests for LLM prompts.** Change a prompt, run one command, find out whether it still behaves.
+**Did your CLAUDE.md change make your coding agent better or worse?**
+
+Teams keep editing the files that steer their coding agents: `CLAUDE.md`, `AGENTS.md`, skills, MCP servers. Nobody can tell whether an edit helped, made the agent more confused, or just made every task more expensive. diditbreak runs your real tasks in fresh sandboxes under each setup, several times each, and measures the difference.
+
+It matters because the obvious assumption ("more instructions help") is often wrong. An [ETH Zurich study](https://arxiv.org/abs/2602.11988) found that LLM-generated `AGENTS.md` files *lowered* task success by about 3% and raised costs by over 20%. Even hand-written ones raised costs by up to 19%.
+
+## Try it in a minute
 
 ```bash
-npx promptguard init     # config, a sample prompt, and a suite that passes first time
-npx promptguard test
+npx diditbreak init --demo        # a tiny repo with a CLAUDE.md edit to test
+cd diditbreak-demo
+npx diditbreak compare --agent mock   # free and offline (simulated numbers)
+npx diditbreak compare                # real Claude Code runs; asks before spending
 ```
 
+## A real result
+
+The demo project's committed `CLAUDE.md` is short and correct: *run tests with `node --test`, no dependencies*. The edit pastes 41 lines of generic team-wiki guidelines on top, including *"all tests must use Jest"*. These are 12 real Claude Code runs (haiku), not a simulation:
+
 ```
- PromptGuard 0.1.0 · mock:mock · 2 prompts · 4 cases
+ diditbreak · claude-code (haiku) · 2 tasks × 2 trials · 12 runs · 1m 49s
 
- sql-generator
-   ✓ never-drops-tables     assert     0ms
-   ✗ starts-with-select     assert     0ms
-     └ regex: output did not match /^SELECT/
+ setup    solved         cost/run  turns  context  time/run
+ none       4/4  100%    $0.025    3.0    18.3k    9s
+ HEAD       4/4  100%    $0.049    9.0    18.5k    22s
+ working    3/4   75%    $0.067    11.0   18.9k    38s
 
- support-agent
-   ✓ no-canned-refusals     assert     0ms
-   ✓ handles-damaged-order  judge      0ms
+ vs HEAD
+   none     ±0 pts    (95% CI ±0 … ±0 pts)         no clear difference
+            cost −49% · turns −67% · starting context −193 tokens
+   working  −25 pts   (95% CI −75 … ±0 pts)        no clear difference
+            cost +36% · turns +22% · starting context +450 tokens
 
- ✗ sql-generator  drift 0.500 > 0.100  regressed
- ✓ support-agent  drift 0.000 ≤ 0.100
+ Rules broken  (runs that broke the rule / runs)
+   forbid_command npm install  none 0/4   HEAD 0/4   working 1/4
+                               e.g. ran: npm install --save-dev jest
 
- Cases   3 passed, 1 failed · 3 zero-cost · 0 tokens · $0
- Result  FAIL 1 of 2 prompts regressed  (10ms)
+ Blocked actions  (attempts the agent's permissions refused)
+   working  3
+
+ Total cost $0.567
 ```
 
-No API key needed to start. The default provider is offline and deterministic. The CLI ships as one file with zero dependencies, so a cold `npx` install is a single ~190 kB download.
+What it shows:
+- **The edit confused the agent.** Following the wiki, it tried `npm install --save-dev jest` against the project's "no dependencies" rule, and wrote tests under a third naming convention neither file asked for.
+- **It made every task more expensive:** 36% more cost and 22% more turns.
+- **Even good context has a price.** The correct `CLAUDE.md` doubled the cost compared with no file, because the agent did what it said and wrote and ran tests. That trade-off is now a number instead of a guess.
+- **The verdict stays honest.** One failure in four runs is not proof, so it reports *no clear difference* with the interval, rather than *worse*. More trials narrow it.
 
----
+## What it measures
 
-## Why
+| Question | Signal | Source |
+|---|---|---|
+| Does the agent succeed? | your `verify` commands pass | the sandbox, after the agent finishes |
+| Is it overwhelmed? | cost, turns, time, and **starting context**: tokens carried into the first model call before any work | the agent's own run report |
+| Is it confused? | forbidden commands, skills invoked or missed, actions its permissions refused | the agent's transcript |
 
-Prompts are code you can't diff meaningfully. Changing `"Be concise"` to `"Be concise and empathetic"` changes every downstream output, and a string comparison can't tell you whether the change improved things or broke them.
-
-The usual answers both fail. **Exact-match assertions** break on harmless rewording, so teams delete them. **LLM-judging everything** is slow and costs money on every commit, so teams run it rarely.
-
-PromptGuard splits the work. Deterministic checks (`contains`, `regex`, JSON Schema, latency budgets) run locally for free and catch most real breakage: malformed JSON, apology preambles, destructive SQL, blown latency. **A failing check stops the case before any model is called.** Only cases that pass and carry a rubric reach the LLM judge.
-
-So the whole suite can run on every commit, and tokens get spent only where semantic judgement is actually needed.
-
-## The CLI
+## Commands
 
 | Command | |
 |---|---|
-| `promptguard init [--provider <name>]` | Scaffold a working project: config, a sample prompt, a passing suite |
-| `promptguard add <name> [file]` | Register a prompt, or update it if its content changed (`--content` and stdin work too) |
-| `promptguard test [--base <ref>] [--json]` | Run the suite; compare against a git ref; machine-readable output for CI |
-| `promptguard doctor` | Check config, provider keys, prompts, test files and git setup, and print the fix for anything wrong |
+| `diditbreak init` | Set up experiments in this repo: config and an example task |
+| `diditbreak init --demo [dir]` | Create the ready-made demo repo |
+| `diditbreak compare [setups..]` | Compare setups: git refs, `working` (your uncommitted edits) or `none` (no context). Defaults to `HEAD` vs `working`, plus the `none` baseline |
+| `diditbreak ablate [file]` | Remove one `CLAUDE.md` section, then one skill, at a time to find what helps and what hurts |
+| `diditbreak report [results.json]` | Re-render a past run without re-running anything |
 
-A few details that matter in daily use:
+Exit codes: `0` no regression · `1` the last setup is clearly worse · `2` setup or configuration error.
 
-- **Exit codes mean something.** `0` pass, `1` a prompt regressed, `2` the tool couldn't run. CI can tell a failed check from a broken job.
-- **Every error says what to do next.** No raw `ENOENT`s. A missing config points at `init`, an empty registry at `add`, a missing key names the environment variable.
-- **`doctor` catches the silent failures.** A gitignored prompt registry makes `--base` quietly compare against nothing. `doctor` flags that, along with test files that target prompts that don't exist.
-- **Quiet in CI, live in a terminal.** The spinner only runs in an interactive TTY; `--json` output is stable and versioned (`schemaVersion: 1`).
+## Writing tasks
 
-## Test files
+A task is a small, real change from your backlog plus a way to tell whether it worked. Put it in `.diditbreak/tasks/*.yaml`:
 
-```json
-{
-  "prompts": "sql-generator",
-  "cases": [
-    {
-      "name": "never-drops-tables",
-      "input": "Clean up inactive users",
-      "assert": { "not_contains": ["DROP TABLE", "TRUNCATE"] }
-    },
-    {
-      "name": "sql-only-output",
-      "input": "List users who signed up this month",
-      "assert": { "regex": "^SELECT", "max_latency_ms": 5000 },
-      "expect": "A single correct PostgreSQL query with no surrounding prose."
-    }
-  ]
-}
+```yaml
+prompt: |
+  Add a `slugify(text)` function to src/strings.js. It lowercases the text,
+  replaces every run of non-alphanumeric characters with one hyphen, and
+  strips leading and trailing hyphens. Export it.
+
+# Must all exit 0. The agent never sees this file, so it cannot game the check.
+verify: >-
+  node -e "import('./src/strings.js').then(({ slugify: s }) =>
+  process.exit(s('  Hello, World!  ') === 'hello-world' ? 0 : 1))"
+
+checks:
+  must_change: src/strings.js
+  must_not_change: package.json
+  forbid_commands: npm install
+  # expect_skills: my-skill      # this task should trigger that skill
+  # max_turns: 20
+  # max_cost_usd: 0.50
 ```
 
-| Check | Passes when | Cost |
-|---|---|---|
-| `contains` / `not_contains` | substrings present / absent | free, local |
-| `regex` | the pattern matches | free, local |
-| `json_schema` | output parses and validates | free, local |
-| `max_latency_ms` | generation finished within budget | free, local |
-| `expect` | the LLM judge says the rubric is met | one judge call |
+## Why you can trust the numbers
 
-`prompts` scopes a file, or a single case, to specific prompts. Without it, cases run against every prompt. Unknown keys are rejected, so a typo fails loudly instead of passing silently.
-
-## Providers
-
-| `provider` | Key | Notes |
-|---|---|---|
-| `mock` | none | Offline, deterministic. **Default** |
-| `local` | none | Ollama |
-| `openai` | `OPENAI_API_KEY` | With `baseUrl`, any OpenAI-compatible server (vLLM, llama.cpp, LM Studio), key optional |
-| `anthropic` | `ANTHROPIC_API_KEY` | |
-| `gemini` | `GEMINI_API_KEY` | Free tier; native JSON mode |
-| `groq` | `GROQ_API_KEY` | Free tier |
-
-All providers retry 429 and 5xx with exponential backoff and jitter, use structured JSON output where the API supports it, and report tokens and estimated cost.
+- **Same code, different context.** Each trial gets its own git worktree: the code comes from the task's base commit, and only the context files differ between setups. Both states are committed, so the agent's diff holds only its own work. Your working tree is never touched.
+- **Statistics that respect noise.** Agents are random, so every task runs several times. Pass rates get Wilson intervals, and comparisons use a paired bootstrap over tasks, then trials. *Better* or *worse* is only claimed when the difference survives resampling.
+- **Your machine stays out of the result.** Personal settings and MCP servers are shut out (`--setting-sources project`, `--strict-mcp-config`). Skills that load from outside the repo are disclosed in the report rather than hidden.
+- **Spend is bounded.** Every run has a hard budget enforced by the agent itself. Before a real experiment, diditbreak shows the plan and the worst case, then asks.
 
 ## In CI
 
 ```yaml
 - uses: actions/checkout@v4
   with:
-    fetch-depth: 0                       # baselines are read from git history
-- run: npx promptguard test --base origin/${{ github.base_ref }}
+    fetch-depth: 0                       # the base branch's context is read from git
+- run: npm install -g @anthropic-ai/claude-code
+- run: npx diditbreak compare origin/${{ github.base_ref }} HEAD --no-baseline --yes
+  env:
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
-Commit `.promptguard/prompts.json`. `--base` reads each prompt's previous version with `git show`, so an ignored registry leaves nothing to compare against.
+The job fails when the pull request's context is clearly worse than the base branch's. Gate it on changes to `CLAUDE.md`, `AGENTS.md` or `.claude/` so it only spends when the context actually changed.
 
----
+## Configuration
 
-## Beyond the CLI: the evaluation service
+`diditbreak.config.ts`:
 
-The CLI runs everything in-process, and for most teams that's all they need. Set `PROMPTGUARD_API_URL` and the same command submits the run to a self-hosted service instead, which adds what a single process can't:
-
-| | CLI alone | With the service |
-|---|---|---|
-| Run history | this terminal session | PostgreSQL, queryable |
-| Execution | one process | BullMQ queue, horizontally scalable workers |
-| Crash recovery | rerun by hand | stalled-job handlers + a timeout reconciler |
-| Prompt versions | the git registry | content-hashed history, diffed per run |
-| Visibility | stdout | dashboard with a Monaco diff viewer, live SSE progress, a playground |
-
-It's fully self-hosted with no SaaS dependency: six providers, no vendor coupling. If all you want is a mature local eval runner, [promptfoo](https://promptfoo.dev) is excellent. PromptGuard's distinct piece is the execution layer behind it.
-
-### Architecture
-
-```mermaid
-flowchart LR
-  subgraph dev["Developer machine"]
-    SDK["definePrompt()"] --> REG[".promptguard/prompts.json<br/>(committed to git)"]
-    TESTS["prompt_tests/*.json"]
-    CLI["promptguard test"]
-    REG --> CLI
-    TESTS --> CLI
-  end
-
-  CLI -->|"local mode"| EVAL
-  CLI -->|"PROMPTGUARD_API_URL set"| API
-
-  subgraph svc["Self-hosted services"]
-    API["Fastify API"] --> PG[("PostgreSQL<br/>runs, versions, results")]
-    API --> Q{{"BullMQ / Redis"}}
-    Q --> W["Worker pool"]
-    W --> EVAL["Evaluator"]
-    W --> PG
-    RECON["Timeout reconciler<br/>(every 5 min)"] --> PG
-  end
-
-  subgraph evalcore["Evaluation pipeline"]
-    EVAL --> DET["1 · Deterministic assertions<br/>zero tokens"]
-    DET -->|"fail: short-circuit"| OUT["Result"]
-    DET -->|"pass + rubric set"| JUDGE["2 · LLM judge"]
-    JUDGE --> OUT
-  end
-
-  API --> DASH["React dashboard<br/>diff viewer · live SSE · playground"]
+```ts
+export default {
+  agent: {
+    name: "claude-code",
+    model: "sonnet",          // "haiku" makes experiments cheap
+    maxTurns: 30,
+    maxBudgetUsd: 1,          // hard cap per run
+    permissionMode: "acceptEdits",
+    allowedTools: ["Bash(npm test:*)"]
+  },
+  tasks: {
+    dir: ".diditbreak/tasks",
+    trials: 3,
+    concurrency: 2,
+    setup: ["npm ci"]         // runs in each fresh sandbox first
+  }
+};
 ```
 
-**Run lifecycle.** `POST /runs` persists the run and enqueues one job per prompt. A worker marks the run `RUNNING`, stamps a 15-minute `timeoutAt`, and hands off to the judge queue. Each finished prompt increments a counter; when it reaches `expectedJobs` the run finalises. Three mechanisms stop a run hanging forever: BullMQ `failed` handlers, `stalled` handlers for workers that died holding a lock, and a periodic reconciler that fails any run past its deadline.
+## Agents
 
----
+| Agent | Status |
+|---|---|
+| Claude Code | Supported: headless `stream-json`, cost, turns, tool calls, skill invocations |
+| Mock | Supported: seeded and offline, models the effects above for CI and demos |
+| Codex CLI, Gemini CLI | Planned, behind the same adapter interface |
 
-### Run it
+## Also in the box
 
-```bash
-docker compose up -d
-docker compose exec api-server npm run seed      # four prompts, ~28 runs of history, no LLM calls
-```
-
-Dashboard on <http://localhost:3000>, API on <http://localhost:4000>. `curl localhost:4000/health` reports database and Redis state.
-
-### API
-
-| Method | Path | Purpose |
-|---|---|---|
-| `GET` | `/health` | DB + Redis connectivity; 503 when degraded |
-| `POST` | `/runs` | Create a run and enqueue jobs |
-| `GET` | `/runs` | List runs; `?status=`, `?environment=`, `?limit=`, `?cursor=` |
-| `GET` | `/runs/:id` | Run summary |
-| `GET` | `/runs/:id/results` | Per-case results |
-| `GET` | `/runs/:id/view` | Run + results + prompt diffs |
-| `GET` | `/runs/:id/events` | SSE stream of live progress |
-| `DELETE` | `/runs/:id` | Delete a run, cascading its results |
-| `GET` | `/prompts` | Registered prompts |
-| `GET` | `/prompts/:id` | Prompt with full version history |
-| `GET` | `/prompts/:id/runs` | Runs touching a prompt |
-| `POST` | `/evaluate` | Single-case evaluation (Playground) |
-
----
+- **[Prompt regression suite](docs/prompt-testing.md):** the original diditbreak. It tests a single prompt with free deterministic checks first and an LLM judge only when needed (`init --prompts`, `test`).
+- **[Self-hosted service](docs/service.md):** a Fastify API, BullMQ workers, Postgres, and a React dashboard, for run history and team visibility.
 
 ## Repository layout
 
 ```
-apps/
-  api-server/      Fastify + Prisma (PostgreSQL) + BullMQ
-  worker/          Queue consumers, run finalisation, timeout reconciler
-  web-dashboard/   React + Vite + Tailwind + Monaco diff viewer
 packages/
-  shared-types/    Zod + TypeScript contracts (single source of truth)
-  llm-provider/    Six providers, retry, pricing, provider factory
-  evaluator/       Two-stage pipeline, bounded concurrency
-  sdk/             definePrompt + content-hashed registry
-  cli/             promptguard init / test
+  agent-eval/      sandboxes, agent adapters, checks, statistics, ablation
+  cli/             the diditbreak command (one bundled file, zero dependencies)
+  evaluator/       prompt suite: assertions, then LLM judge
+  llm-provider/    six LLM providers with retry and pricing
+  sdk/             definePrompt and the content-hashed prompt registry
+  shared-types/    shared contracts
+apps/              self-hosted API, worker and dashboard
+examples/          context-demo, the project behind `init --demo`
 ```
 
 ## Development
@@ -216,10 +172,10 @@ packages/
 ```bash
 corepack pnpm install
 corepack pnpm -r build
-corepack pnpm -r test            # 300+ tests, coverage thresholds enforced per package
+corepack pnpm -r test     # ~390 tests; coverage thresholds enforced per package
 ```
 
-CI runs typecheck, lint, and tests; integration tests against real Postgres and Redis; and a smoke test that installs the packed npm tarball in a clean directory and runs `init` → `test` → `doctor` exactly as a new user would. Nothing in CI calls a paid API.
+CI runs the tests, integration tests against real Postgres and Redis, and a smoke test that installs the packed npm tarball in a clean directory and runs both the prompt suite and a full mock comparison, as a new user would. Nothing in CI calls a paid API.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 

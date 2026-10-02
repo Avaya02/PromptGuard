@@ -4,7 +4,7 @@ import { dirname } from "node:path";
 import type { PromptRegistry } from "./schema.js";
 import { promptRegistrySchema } from "./schema.js";
 
-export const DEFAULT_REGISTRY_PATH = ".promptguard/prompts.json";
+export const DEFAULT_REGISTRY_PATH = ".diditbreak/prompts.json";
 
 export async function readRegistryFile(registryPath: string): Promise<PromptRegistry> {
   try {

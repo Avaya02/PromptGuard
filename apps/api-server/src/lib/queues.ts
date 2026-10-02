@@ -1,6 +1,6 @@
 import { Queue, type ConnectionOptions } from "bullmq";
 
-import { QUEUE_NAMES } from "@promptguard/shared-types";
+import { QUEUE_NAMES } from "@diditbreak/shared-types";
 
 export interface ApiQueues {
   promptRunQueue: Queue;

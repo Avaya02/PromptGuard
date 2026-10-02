@@ -21,7 +21,7 @@ export function DashboardShell({ children }: PropsWithChildren): JSX.Element {
             <ShieldCheck className="h-5 w-5" />
           </span>
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-pg-slate/70">PromptGuard</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-pg-slate/70">diditbreak</p>
             <p className="text-lg font-semibold text-pg-ink">Semantic Regression Dashboard</p>
           </div>
         </Link>

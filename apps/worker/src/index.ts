@@ -1,6 +1,6 @@
 import { Queue, Worker } from "bullmq";
 
-import { QUEUE_NAMES, type PromptRunJobPayload } from "@promptguard/shared-types";
+import { QUEUE_NAMES, type PromptRunJobPayload } from "@diditbreak/shared-types";
 
 import { loadEnv } from "./env.js";
 import { prisma } from "./lib/prisma.js";

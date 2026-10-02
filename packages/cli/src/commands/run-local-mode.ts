@@ -1,5 +1,5 @@
-import { runEvaluation, type PromptEvaluationResult } from "@promptguard/evaluator";
-import { selectCasesForPrompt } from "@promptguard/shared-types";
+import { runEvaluation, type PromptEvaluationResult } from "@diditbreak/evaluator";
+import { selectCasesForPrompt } from "@diditbreak/shared-types";
 
 import type { TestModeContext } from "./test-command.js";
 import { createProvider } from "../providers/create-provider.js";

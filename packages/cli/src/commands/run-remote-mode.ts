@@ -1,9 +1,9 @@
-import type { PromptEvaluationResult } from "@promptguard/evaluator";
+import type { PromptEvaluationResult } from "@diditbreak/evaluator";
 import {
   selectCasesForPrompt,
   type CreateRunRequest,
   type RunResultRecord
-} from "@promptguard/shared-types";
+} from "@diditbreak/shared-types";
 import type { Ora } from "ora";
 
 import type { TestModeContext } from "./test-command.js";
@@ -105,7 +105,7 @@ export async function runRemoteMode(
   const commitSha = await resolveCommitSha(context.cwd);
   const payload = buildCreateRunRequest(context, commitSha);
 
-  spinner.text = "Submitting run to PromptGuard API";
+  spinner.text = "Submitting run to diditbreak API";
   const created = await createRemoteRun(apiUrl, payload);
 
   spinner.text = `Waiting for remote run ${created.run.id}`;

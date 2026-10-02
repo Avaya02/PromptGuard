@@ -1,0 +1,29 @@
+prompt: |
+  Add a `truncate(text, max)` function to src/strings.js. Return the text
+  unchanged when it has at most `max` characters; otherwise return the first
+  `max - 1` characters followed by "…". Export it.
+
+verify: >-
+  node -e "import('./src/strings.js').then(({ truncate: t }) => process.exit(
+  t('hello', 10) === 'hello' && t('hello world', 6) === 'hello…' && t('abc', 3) === 'abc' ? 0 : 1))"
+
+checks:
+  must_change: src/strings.js
+  must_not_change: package.json
+  forbid_commands: npm install
+
+mock:
+  files:
+    src/strings.js: |
+      export function capitalize(text) {
+        return text.length === 0 ? text : text[0].toUpperCase() + text.slice(1);
+      }
+      export function truncate(text, max) {
+        return text.length <= max ? text : text.slice(0, max - 1) + "…";
+      }
+  requires: node --test
+  breaks_on: Jest
+  flaky: 0.1
+  commands:
+    - run: npm install --save-dev jest
+      when: Jest

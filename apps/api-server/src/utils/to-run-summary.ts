@@ -1,4 +1,4 @@
-import type { RunSummary } from "@promptguard/shared-types";
+import type { RunSummary } from "@diditbreak/shared-types";
 
 interface RunRecord {
   id: string;

@@ -1,12 +1,12 @@
 import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 
-import type { ModelConfig, PromptGuardConfig, RegisteredPrompt } from "@promptguard/shared-types";
+import type { ModelConfig, DiditbreakConfig, RegisteredPrompt } from "@diditbreak/shared-types";
 import chalk from "chalk";
 import { execa } from "execa";
 
 import { loadConfig } from "../config/load-config.js";
-import { PromptGuardCliError } from "../errors.js";
+import { CliError } from "../errors.js";
 import { loadCurrentPrompts } from "../prompts/load-current-prompts.js";
 import { loadTestCases } from "../tests/load-test-cases.js";
 import { findUnknownScopes } from "./test-command.js";
@@ -38,7 +38,7 @@ const KEY_ENV_VARS: Record<string, string> = {
 };
 
 function describeError(error: unknown): { detail: string; fix?: string } {
-  if (error instanceof PromptGuardCliError) {
+  if (error instanceof CliError) {
     return { detail: error.message, fix: error.hint };
   }
   return { detail: error instanceof Error ? error.message : String(error) };
@@ -123,7 +123,7 @@ async function checkProvider(
 
 async function checkRegistryInGit(cwd: string): Promise<CheckResult> {
   const label = "Baseline";
-  const path = ".promptguard/prompts.json";
+  const path = ".diditbreak/prompts.json";
 
   const inRepo = await execa("git", ["rev-parse", "--is-inside-work-tree"], { cwd, reject: false });
   if (inRepo.exitCode !== 0) {
@@ -143,7 +143,7 @@ async function checkRegistryInGit(cwd: string): Promise<CheckResult> {
       status: "fail",
       label,
       detail: `${path} is gitignored, so --base has nothing to compare against`,
-      fix: "Remove .promptguard from .gitignore, then commit the registry."
+      fix: "Remove .diditbreak from .gitignore, then commit the registry."
     };
   }
 
@@ -160,10 +160,10 @@ async function checkRegistryInGit(cwd: string): Promise<CheckResult> {
 
 async function checkRemoteApi(environment: DoctorEnvironment): Promise<CheckResult> {
   const label = "Remote API";
-  const apiUrl = environment.env.PROMPTGUARD_API_URL;
+  const apiUrl = environment.env.DIDITBREAK_API_URL;
 
   if (!apiUrl) {
-    return { status: "skip", label, detail: "PROMPTGUARD_API_URL not set — runs execute locally" };
+    return { status: "skip", label, detail: "DIDITBREAK_API_URL not set — runs execute locally" };
   }
 
   try {
@@ -185,7 +185,7 @@ async function checkRemoteApi(environment: DoctorEnvironment): Promise<CheckResu
       status: "fail",
       label,
       detail: `cannot reach ${apiUrl}`,
-      fix: "Start the API, or unset PROMPTGUARD_API_URL to run locally."
+      fix: "Start the API, or unset DIDITBREAK_API_URL to run locally."
     };
   }
 }
@@ -194,13 +194,13 @@ export async function runDoctorChecks(environment: DoctorEnvironment): Promise<C
   const { cwd } = environment;
   const results: CheckResult[] = [checkNode(environment.nodeVersion)];
 
-  let config: PromptGuardConfig | null = null;
+  let config: DiditbreakConfig | null = null;
   try {
     config = await loadConfig(cwd);
     results.push({
       status: "ok",
       label: "Config",
-      detail: `promptguard.config.ts · threshold ${config.threshold}`
+      detail: `diditbreak.config.ts · threshold ${config.threshold}`
     });
   } catch (error) {
     results.push({ status: "fail", label: "Config", ...describeError(error) });
@@ -246,7 +246,7 @@ export async function runDoctorChecks(environment: DoctorEnvironment): Promise<C
           status: "warn",
           label: "Tests",
           detail: `cases target "${name}", which is not registered — they will never run`,
-          fix: `promptguard add ${name} <file>, or fix the name in the test file.`
+          fix: `diditbreak add ${name} <file>, or fix the name in the test file.`
         });
       }
     } catch (error) {
@@ -276,7 +276,7 @@ export async function runDoctorCommand(): Promise<number> {
 
   const width = Math.max(...results.map((result) => result.label.length));
 
-  console.log(`\n ${chalk.bold("PromptGuard doctor")}\n`);
+  console.log(`\n ${chalk.bold("diditbreak doctor")}\n`);
   for (const result of results) {
     const detail = result.status === "skip" ? chalk.dim(result.detail) : result.detail;
     console.log(` ${ICONS[result.status]} ${result.label.padEnd(width)}  ${detail}`);
@@ -290,12 +290,12 @@ export async function runDoctorCommand(): Promise<number> {
 
   console.log("");
   if (failures > 0) {
-    console.log(` ${chalk.red(`${failures} problem${failures === 1 ? "" : "s"}`)} to fix before \`promptguard test\` will run cleanly.\n`);
+    console.log(` ${chalk.red(`${failures} problem${failures === 1 ? "" : "s"}`)} to fix before \`diditbreak test\` will run cleanly.\n`);
     return 1;
   }
 
   console.log(
-    ` ${warnings > 0 ? chalk.yellow(`${warnings} warning${warnings === 1 ? "" : "s"}.`) : chalk.green("All good.")} Ready for \`promptguard test\`.\n`
+    ` ${warnings > 0 ? chalk.yellow(`${warnings} warning${warnings === 1 ? "" : "s"}.`) : chalk.green("All good.")} Ready for \`diditbreak test\`.\n`
   );
   return 0;
 }

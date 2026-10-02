@@ -21,13 +21,13 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 COPY packages ./packages
 COPY apps/api-server ./apps/api-server
 
-RUN pnpm --filter @promptguard/shared-types build \
- && pnpm --filter @promptguard/llm-provider build \
- && pnpm --filter @promptguard/evaluator build \
- && pnpm --filter @promptguard/api-server build
+RUN pnpm --filter @diditbreak/shared-types build \
+ && pnpm --filter @diditbreak/llm-provider build \
+ && pnpm --filter @diditbreak/evaluator build \
+ && pnpm --filter @diditbreak/api-server build
 
 # pnpm 10 only deploys non-injected workspace packages in legacy mode.
-RUN pnpm --filter @promptguard/api-server --prod deploy --legacy /tmp/api-server
+RUN pnpm --filter @diditbreak/api-server --prod deploy --legacy /tmp/api-server
 
 FROM base AS runtime
 ENV NODE_ENV=production

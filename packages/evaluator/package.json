@@ -1,7 +1,7 @@
 {
-  "name": "@promptguard/evaluator",
+  "name": "@diditbreak/evaluator",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,8 +17,8 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@promptguard/llm-provider": "workspace:*",
-    "@promptguard/shared-types": "workspace:*",
+    "@diditbreak/llm-provider": "workspace:*",
+    "@diditbreak/shared-types": "workspace:*",
     "ajv": "^8.20.0",
     "p-limit": "^7.3.2"
   }

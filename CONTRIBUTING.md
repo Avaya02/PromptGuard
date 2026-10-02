@@ -1,4 +1,4 @@
-# Contributing to PromptGuard
+# Contributing to diditbreak
 
 ## Setup
 
@@ -18,8 +18,8 @@ Workspace packages resolve through `dist/`, so a fresh clone needs `build` befor
 docker compose up -d postgres redis
 cp apps/api-server/.env.example apps/api-server/.env
 cp apps/worker/.env.example apps/worker/.env
-corepack pnpm --filter @promptguard/api-server prisma:migrate
-corepack pnpm --filter @promptguard/api-server seed
+corepack pnpm --filter @diditbreak/api-server prisma:migrate
+corepack pnpm --filter @diditbreak/api-server seed
 ```
 
 Postgres is published on host port **5433** to avoid colliding with a local install. Inside the compose network it is still 5432 — both `.env.example` files use 5433 because they are for processes running on the host.
@@ -27,9 +27,9 @@ Postgres is published on host port **5433** to avoid colliding with a local inst
 ### Running locally
 
 ```bash
-corepack pnpm --filter @promptguard/api-server dev
-corepack pnpm --filter @promptguard/worker dev
-corepack pnpm --filter @promptguard/web-dashboard dev
+corepack pnpm --filter @diditbreak/api-server dev
+corepack pnpm --filter @diditbreak/worker dev
+corepack pnpm --filter @diditbreak/web-dashboard dev
 ```
 
 ## Verification
@@ -57,6 +57,7 @@ Vitest, colocated as `*.test.ts` beside the code, or under `test/` for app-level
 | Providers | `globalThis.fetch` stubbed; assert on request shape and retry behaviour |
 | API routes | Fastify `inject()` against the in-memory Prisma double in `apps/api-server/test/fake-prisma.ts` |
 | Worker | Same Prisma double, calling job processors directly |
+| Agent experiments | Real git worktrees in temp dirs with the seeded mock agent; the Claude Code parser runs against a real, scrubbed transcript in `packages/agent-eval/test/fixtures/` |
 
 The Prisma double keeps the suite runnable with no Docker and no database, which is what lets CI run at zero cost. It implements only the queries the routes actually issue — extend it when you add a query rather than reaching for a real database.
 
@@ -84,7 +85,7 @@ The Prisma double keeps the suite runnable with no Docker and no database, which
 
 ```bash
 # Edit apps/api-server/prisma/schema.prisma, then:
-corepack pnpm --filter @promptguard/api-server exec prisma migrate dev --name your_change
+corepack pnpm --filter @diditbreak/api-server exec prisma migrate dev --name your_change
 ```
 
 Migrations are checked in and applied with `prisma migrate deploy` on container start. Never edit an applied migration; add a new one.
@@ -98,3 +99,9 @@ Three jobs, all on the GitHub Actions free tier with no paid API calls:
 - **regression-demo** — scaffolds a project with `init`, then runs the CLI end to end on MockProvider
 
 If a change needs a real provider key, gate it behind an explicit secret check so forks and PRs still pass.
+
+## The demo project
+
+`examples/context-demo` is the source for `diditbreak init --demo`. After editing it, run `node scripts/sync-demo.mjs` to re-embed it in the CLI; a test fails if the two drift apart.
+
+Never run real agents in tests. Use the mock agent, or the fake `claude` binaries the adapter tests build.

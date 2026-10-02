@@ -11,7 +11,7 @@ import { readRegistryFile, writeRegistryFile, DEFAULT_REGISTRY_PATH } from "./re
 let cwd: string;
 
 beforeEach(async () => {
-  cwd = await mkdtemp(join(tmpdir(), "promptguard-sdk-"));
+  cwd = await mkdtemp(join(tmpdir(), "diditbreak-sdk-"));
 });
 
 afterEach(async () => {
@@ -118,7 +118,7 @@ describe("registry serialisation", () => {
 
   it("rejects a structurally invalid registry", async () => {
     const path = join(cwd, DEFAULT_REGISTRY_PATH);
-    await mkdir(join(cwd, ".promptguard"), { recursive: true });
+    await mkdir(join(cwd, ".diditbreak"), { recursive: true });
     await writeFile(path, JSON.stringify({ prompts: [{ name: "x" }] }), "utf-8");
 
     await expect(readRegistryFile(path)).rejects.toThrow();
@@ -126,7 +126,7 @@ describe("registry serialisation", () => {
 
   it("rejects a non-positive version", async () => {
     const path = join(cwd, DEFAULT_REGISTRY_PATH);
-    await mkdir(join(cwd, ".promptguard"), { recursive: true });
+    await mkdir(join(cwd, ".diditbreak"), { recursive: true });
     const now = new Date().toISOString();
     await writeFile(
       path,

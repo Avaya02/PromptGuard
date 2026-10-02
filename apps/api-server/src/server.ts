@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import type { Queue } from "bullmq";
 
-import { QUEUE_NAMES } from "@promptguard/shared-types";
+import { QUEUE_NAMES } from "@diditbreak/shared-types";
 
 import { buildApiServer } from "./app.js";
 import { loadEnv } from "./env.js";

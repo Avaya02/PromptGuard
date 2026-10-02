@@ -1,4 +1,4 @@
-import type { ModelConfig } from "@promptguard/shared-types";
+import type { ModelConfig } from "@diditbreak/shared-types";
 
 import type { LLMProvider } from "./llm-provider.js";
 import { AnthropicProvider } from "./providers/anthropic-provider.js";
@@ -24,7 +24,7 @@ export type SupportedProvider = (typeof SUPPORTED_PROVIDERS)[number];
  *
  * Shared by the CLI and the worker so both understand exactly the same set of
  * providers. An absent config resolves to MockProvider, which is what makes a
- * zero-config `prompt-guard test` work with no API key.
+ * zero-config `diditbreak test` work with no API key.
  */
 export function createProvider(modelConfig?: ModelConfig): LLMProvider {
   if (!modelConfig) {

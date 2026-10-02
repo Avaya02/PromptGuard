@@ -6,7 +6,7 @@ import { promisify } from "node:util";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { PromptGuardCliError } from "../errors.js";
+import { CliError } from "../errors.js";
 import { resolveCommitSha } from "../git/resolve-commit-sha.js";
 import { loadBaselinePrompts } from "./load-baseline-prompts.js";
 import { loadCurrentPrompts } from "./load-current-prompts.js";
@@ -15,7 +15,7 @@ const run = promisify(execFile);
 let cwd: string;
 
 beforeEach(async () => {
-  cwd = await mkdtemp(join(tmpdir(), "promptguard-prompts-"));
+  cwd = await mkdtemp(join(tmpdir(), "diditbreak-prompts-"));
 });
 
 afterEach(async () => {
@@ -36,8 +36,8 @@ function registry(prompts: Array<{ name: string; content: string }>): string {
 }
 
 async function writeRegistry(prompts: Array<{ name: string; content: string }>): Promise<void> {
-  await mkdir(join(cwd, ".promptguard"), { recursive: true });
-  await writeFile(join(cwd, ".promptguard", "prompts.json"), registry(prompts), "utf-8");
+  await mkdir(join(cwd, ".diditbreak"), { recursive: true });
+  await writeFile(join(cwd, ".diditbreak", "prompts.json"), registry(prompts), "utf-8");
 }
 
 describe("loadCurrentPrompts", () => {
@@ -57,8 +57,8 @@ describe("loadCurrentPrompts", () => {
     await writeRegistry([]);
 
     const error = await loadCurrentPrompts(cwd).catch((e: unknown) => e);
-    expect(error).toBeInstanceOf(PromptGuardCliError);
-    expect((error as PromptGuardCliError).hint).toContain("promptguard add");
+    expect(error).toBeInstanceOf(CliError);
+    expect((error as CliError).hint).toContain("diditbreak add");
   });
 });
 
@@ -78,7 +78,7 @@ describe("loadBaselinePrompts", () => {
 
     const baseline = await loadBaselinePrompts(cwd, "HEAD");
 
-    // This is the path that silently broke while .promptguard was gitignored.
+    // This is the path that silently broke while .diditbreak was gitignored.
     expect(baseline.get("greeter")).toBe("Original text.");
   });
 

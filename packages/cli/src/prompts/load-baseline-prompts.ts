@@ -1,6 +1,6 @@
 import { execa } from "execa";
 
-import { promptRegistrySchema } from "@promptguard/sdk";
+import { promptRegistrySchema } from "@diditbreak/sdk";
 
 export async function loadBaselinePrompts(
   cwd: string,
@@ -9,7 +9,7 @@ export async function loadBaselinePrompts(
   try {
     const { stdout } = await execa(
       "git",
-      ["show", `${baseRef}:.promptguard/prompts.json`],
+      ["show", `${baseRef}:.diditbreak/prompts.json`],
       {
         cwd
       }

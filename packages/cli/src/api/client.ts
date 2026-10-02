@@ -3,7 +3,7 @@ import type {
   CreateRunResponse,
   RunResultRecord,
   RunSummary
-} from "@promptguard/shared-types";
+} from "@diditbreak/shared-types";
 
 import { createRunResponseSchema, runResultsSchema, runSummarySchema } from "./schemas.js";
 

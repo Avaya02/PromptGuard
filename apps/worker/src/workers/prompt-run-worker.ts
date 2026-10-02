@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import type { Queue } from "bullmq";
 
-import { type PromptRunJobPayload } from "@promptguard/shared-types";
+import { type PromptRunJobPayload } from "@diditbreak/shared-types";
 
 import { RUN_TIMEOUT_MS } from "../services/reconcile-runs.js";
 

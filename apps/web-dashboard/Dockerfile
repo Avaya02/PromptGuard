@@ -16,8 +16,8 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 COPY packages ./packages
 COPY apps/web-dashboard ./apps/web-dashboard
 
-RUN pnpm --filter @promptguard/shared-types build \
- && pnpm --filter @promptguard/web-dashboard build
+RUN pnpm --filter @diditbreak/shared-types build \
+ && pnpm --filter @diditbreak/web-dashboard build
 
 # Static assets need no Node runtime; nginx keeps the image tiny.
 FROM nginx:1.27-alpine AS runtime

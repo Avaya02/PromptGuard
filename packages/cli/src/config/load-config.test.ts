@@ -4,13 +4,13 @@ import { join } from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { PromptGuardCliError } from "../errors.js";
+import { CliError } from "../errors.js";
 import { loadConfig } from "./load-config.js";
 
 let cwd: string;
 
 beforeEach(async () => {
-  cwd = await mkdtemp(join(tmpdir(), "promptguard-config-"));
+  cwd = await mkdtemp(join(tmpdir(), "diditbreak-config-"));
 });
 
 afterEach(async () => {
@@ -18,7 +18,7 @@ afterEach(async () => {
 });
 
 async function writeConfig(source: string): Promise<void> {
-  await writeFile(join(cwd, "promptguard.config.ts"), source, "utf-8");
+  await writeFile(join(cwd, "diditbreak.config.ts"), source, "utf-8");
 }
 
 const VALID = `export default {
@@ -58,8 +58,8 @@ describe("loadConfig", () => {
   it("raises an actionable error when the config is absent", async () => {
     const error = await loadConfig(cwd).catch((e: unknown) => e);
 
-    expect(error).toBeInstanceOf(PromptGuardCliError);
-    expect((error as PromptGuardCliError).hint).toContain("promptguard init");
+    expect(error).toBeInstanceOf(CliError);
+    expect((error as CliError).hint).toContain("diditbreak init");
   });
 
   describe("validation", () => {
