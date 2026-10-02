@@ -57,6 +57,7 @@ Vitest, colocated as `*.test.ts` beside the code, or under `test/` for app-level
 | Providers | `globalThis.fetch` stubbed; assert on request shape and retry behaviour |
 | API routes | Fastify `inject()` against the in-memory Prisma double in `apps/api-server/test/fake-prisma.ts` |
 | Worker | Same Prisma double, calling job processors directly |
+| Agent experiments | Real git worktrees in temp dirs with the seeded mock agent; the Claude Code parser runs against a real, scrubbed transcript in `packages/agent-eval/test/fixtures/` |
 
 The Prisma double keeps the suite runnable with no Docker and no database, which is what lets CI run at zero cost. It implements only the queries the routes actually issue — extend it when you add a query rather than reaching for a real database.
 
@@ -98,3 +99,9 @@ Three jobs, all on the GitHub Actions free tier with no paid API calls:
 - **regression-demo** — scaffolds a project with `init`, then runs the CLI end to end on MockProvider
 
 If a change needs a real provider key, gate it behind an explicit secret check so forks and PRs still pass.
+
+## The demo project
+
+`examples/context-demo` is the source for `diditbreak init --demo`. After editing it, run `node scripts/sync-demo.mjs` to re-embed it in the CLI; a test fails if the two drift apart.
+
+Never run real agents in tests. Use the mock agent, or the fake `claude` binaries the adapter tests build.
