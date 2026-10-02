@@ -19,12 +19,12 @@ COPY packages ./packages
 COPY apps/api-server/prisma ./apps/api-server/prisma
 COPY apps/worker ./apps/worker
 
-RUN pnpm --filter @promptguard/shared-types build \
- && pnpm --filter @promptguard/llm-provider build \
- && pnpm --filter @promptguard/evaluator build \
- && pnpm --filter @promptguard/worker build
+RUN pnpm --filter @diditbreak/shared-types build \
+ && pnpm --filter @diditbreak/llm-provider build \
+ && pnpm --filter @diditbreak/evaluator build \
+ && pnpm --filter @diditbreak/worker build
 
-RUN pnpm --filter @promptguard/worker --prod deploy --legacy /tmp/worker
+RUN pnpm --filter @diditbreak/worker --prod deploy --legacy /tmp/worker
 
 FROM base AS runtime
 ENV NODE_ENV=production

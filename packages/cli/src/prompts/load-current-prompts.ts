@@ -1,7 +1,7 @@
-import type { RegisteredPrompt } from "@promptguard/shared-types";
-import { readPromptRegistry } from "@promptguard/sdk";
+import type { RegisteredPrompt } from "@diditbreak/shared-types";
+import { readPromptRegistry } from "@diditbreak/sdk";
 
-import { PromptGuardCliError } from "../errors.js";
+import { CliError } from "../errors.js";
 
 export async function loadCurrentPrompts(cwd: string): Promise<RegisteredPrompt[]> {
   // readPromptRegistry already treats a missing registry as an empty one, so a
@@ -9,9 +9,9 @@ export async function loadCurrentPrompts(cwd: string): Promise<RegisteredPrompt[
   const prompts = await readPromptRegistry({ cwd });
 
   if (prompts.length === 0) {
-    throw new PromptGuardCliError(
+    throw new CliError(
       "No prompts registered yet.",
-      "Register one with `promptguard add <name> <file>` (or definePrompt() in code). New project? `promptguard init` scaffolds a working example."
+      "Register one with `diditbreak add <name> <file>` (or definePrompt() in code). New project? `diditbreak init` scaffolds a working example."
     );
   }
 

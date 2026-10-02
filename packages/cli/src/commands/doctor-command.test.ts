@@ -15,7 +15,7 @@ let originalCwd: string;
 
 beforeEach(async () => {
   originalCwd = process.cwd();
-  cwd = await mkdtemp(join(tmpdir(), "promptguard-doctor-"));
+  cwd = await mkdtemp(join(tmpdir(), "diditbreak-doctor-"));
   process.chdir(cwd);
   vi.spyOn(console, "log").mockImplementation(() => {});
 });
@@ -78,7 +78,7 @@ describe("runDoctorChecks", () => {
 
     const config = find(results, "Config");
     expect(config?.status).toBe("fail");
-    expect(config?.fix).toContain("promptguard init");
+    expect(config?.fix).toContain("diditbreak init");
     // Model checks depend on the config, so they are skipped, not failed.
     expect(find(results, "Models")?.status).toBe("skip");
   });
@@ -89,13 +89,13 @@ describe("runDoctorChecks", () => {
 
     const baseline = find(await runDoctorChecks(environment()), "Baseline");
     expect(baseline?.status).toBe("warn");
-    expect(baseline?.fix).toContain("git add .promptguard/prompts.json");
+    expect(baseline?.fix).toContain("git add .diditbreak/prompts.json");
   });
 
   it("fails when the registry is gitignored", async () => {
     await gitInit();
     await runInitCommand({});
-    await writeFile(join(cwd, ".gitignore"), ".promptguard\n", "utf-8");
+    await writeFile(join(cwd, ".gitignore"), ".diditbreak\n", "utf-8");
 
     // The silent failure this check exists to catch: --base would compare
     // against nothing without any error.
@@ -128,7 +128,7 @@ describe("runDoctorChecks", () => {
   it("accepts a keyless OpenAI-compatible server", async () => {
     await runInitCommand({});
     await writeFile(
-      join(cwd, "promptguard.config.ts"),
+      join(cwd, "diditbreak.config.ts"),
       `export default {
         threshold: 0.1,
         testsDir: "prompt_tests",
@@ -174,7 +174,7 @@ describe("runDoctorChecks", () => {
 
   it("reports a healthy remote API", async () => {
     const results = await runDoctorChecks(
-      environment({ env: { PROMPTGUARD_API_URL: "http://api.test" } })
+      environment({ env: { DIDITBREAK_API_URL: "http://api.test" } })
     );
     expect(find(results, "Remote API")?.status).toBe("ok");
   });
@@ -182,7 +182,7 @@ describe("runDoctorChecks", () => {
   it("reports a degraded remote API with its component states", async () => {
     const results = await runDoctorChecks(
       environment({
-        env: { PROMPTGUARD_API_URL: "http://api.test/" },
+        env: { DIDITBREAK_API_URL: "http://api.test/" },
         fetch: vi.fn(async () =>
           new Response(JSON.stringify({ db: "connected", redis: "disconnected" }), { status: 503 })
         ) as unknown as typeof fetch

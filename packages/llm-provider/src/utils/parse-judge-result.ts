@@ -1,4 +1,4 @@
-import type { JudgeResult } from "@promptguard/shared-types";
+import type { JudgeResult } from "@diditbreak/shared-types";
 
 function extractJson(raw: string): string {
   const start = raw.indexOf("{");

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-const SUFFIX = "PromptGuard";
+const SUFFIX = "diditbreak";
 
 /** Sets document.title for the current route and restores it on unmount. */
 export function usePageTitle(title: string): void {

@@ -5,7 +5,7 @@ import {
   type CreateRunResponse,
   type PromptRunJobPayload,
   type RunViewResponse
-} from "@promptguard/shared-types";
+} from "@diditbreak/shared-types";
 
 import { createRunRequestSchema, listRunsQuerySchema, runIdParamsSchema } from "../schemas/runs.js";
 import { buildPromptDiffs } from "../utils/build-prompt-diffs.js";

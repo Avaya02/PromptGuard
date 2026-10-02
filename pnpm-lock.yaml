@@ -44,18 +44,18 @@ importers:
 
   apps/api-server:
     dependencies:
+      '@diditbreak/evaluator':
+        specifier: workspace:^
+        version: link:../../packages/evaluator
+      '@diditbreak/llm-provider':
+        specifier: workspace:^
+        version: link:../../packages/llm-provider
+      '@diditbreak/shared-types':
+        specifier: workspace:*
+        version: link:../../packages/shared-types
       '@prisma/client':
         specifier: ^6.16.1
         version: 6.19.2(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3)
-      '@promptguard/evaluator':
-        specifier: workspace:^
-        version: link:../../packages/evaluator
-      '@promptguard/llm-provider':
-        specifier: workspace:^
-        version: link:../../packages/llm-provider
-      '@promptguard/shared-types':
-        specifier: workspace:*
-        version: link:../../packages/shared-types
       bullmq:
         specifier: ^5.58.0
         version: 5.69.3
@@ -74,7 +74,7 @@ importers:
 
   apps/web-dashboard:
     dependencies:
-      '@promptguard/shared-types':
+      '@diditbreak/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
       '@tanstack/react-query':
@@ -123,18 +123,18 @@ importers:
 
   apps/worker:
     dependencies:
+      '@diditbreak/evaluator':
+        specifier: workspace:*
+        version: link:../../packages/evaluator
+      '@diditbreak/llm-provider':
+        specifier: workspace:*
+        version: link:../../packages/llm-provider
+      '@diditbreak/shared-types':
+        specifier: workspace:*
+        version: link:../../packages/shared-types
       '@prisma/client':
         specifier: ^6.16.1
         version: 6.19.2(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3)
-      '@promptguard/evaluator':
-        specifier: workspace:*
-        version: link:../../packages/evaluator
-      '@promptguard/llm-provider':
-        specifier: workspace:*
-        version: link:../../packages/llm-provider
-      '@promptguard/shared-types':
-        specifier: workspace:*
-        version: link:../../packages/shared-types
       bullmq:
         specifier: ^5.58.0
         version: 5.69.3
@@ -151,16 +151,16 @@ importers:
 
   packages/cli:
     devDependencies:
-      '@promptguard/evaluator':
+      '@diditbreak/evaluator':
         specifier: workspace:*
         version: link:../evaluator
-      '@promptguard/llm-provider':
+      '@diditbreak/llm-provider':
         specifier: workspace:*
         version: link:../llm-provider
-      '@promptguard/sdk':
+      '@diditbreak/sdk':
         specifier: workspace:*
         version: link:../sdk
-      '@promptguard/shared-types':
+      '@diditbreak/shared-types':
         specifier: workspace:*
         version: link:../shared-types
       ajv:
@@ -193,10 +193,10 @@ importers:
 
   packages/evaluator:
     dependencies:
-      '@promptguard/llm-provider':
+      '@diditbreak/llm-provider':
         specifier: workspace:*
         version: link:../llm-provider
-      '@promptguard/shared-types':
+      '@diditbreak/shared-types':
         specifier: workspace:*
         version: link:../shared-types
       ajv:
@@ -208,13 +208,13 @@ importers:
 
   packages/llm-provider:
     dependencies:
-      '@promptguard/shared-types':
+      '@diditbreak/shared-types':
         specifier: workspace:*
         version: link:../shared-types
 
   packages/sdk:
     dependencies:
-      '@promptguard/shared-types':
+      '@diditbreak/shared-types':
         specifier: workspace:*
         version: link:../shared-types
       zod:

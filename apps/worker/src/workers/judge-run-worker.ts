@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 
-import { runEvaluation } from "@promptguard/evaluator";
-import type { PromptRunJobPayload } from "@promptguard/shared-types";
+import { runEvaluation } from "@diditbreak/evaluator";
+import type { PromptRunJobPayload } from "@diditbreak/shared-types";
 
 import { createProvider } from "../providers/create-provider.js";
 import { markPromptCompleted } from "../services/finalize-run.js";

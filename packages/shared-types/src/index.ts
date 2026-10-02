@@ -7,7 +7,7 @@ export interface ModelConfig {
   apiKeyEnvVar?: string | undefined;
 }
 
-export interface PromptGuardConfig {
+export interface DiditbreakConfig {
   threshold: number;
   testsDir: string;
   generationModel: ModelConfig;

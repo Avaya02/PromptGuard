@@ -12,7 +12,7 @@ let originalCwd: string;
 
 beforeEach(async () => {
   originalCwd = process.cwd();
-  cwd = await mkdtemp(join(tmpdir(), "promptguard-init-"));
+  cwd = await mkdtemp(join(tmpdir(), "diditbreak-init-"));
   process.chdir(cwd);
   vi.spyOn(console, "log").mockImplementation(() => {});
   vi.spyOn(console, "error").mockImplementation(() => {});
@@ -28,12 +28,12 @@ describe("runInitCommand", () => {
   it("scaffolds config, sample tests, and a registry seeded with a sample prompt", async () => {
     expect(await runInitCommand({})).toBe(0);
 
-    const config = await readFile(join(cwd, "promptguard.config.ts"), "utf-8");
+    const config = await readFile(join(cwd, "diditbreak.config.ts"), "utf-8");
     expect(config).toContain('provider: "mock"');
     expect(config).toContain("threshold");
 
-    // An empty registry would make the first `promptguard test` after init fail.
-    const registry = JSON.parse(await readFile(join(cwd, ".promptguard/prompts.json"), "utf-8"));
+    // An empty registry would make the first `diditbreak test` after init fail.
+    const registry = JSON.parse(await readFile(join(cwd, ".diditbreak/prompts.json"), "utf-8"));
     expect(registry.prompts).toHaveLength(1);
     expect(registry.prompts[0].name).toBe("support-agent");
     expect(registry.prompts[0].version).toBe(1);
@@ -58,17 +58,17 @@ describe("runInitCommand", () => {
   });
 
   it("does not overwrite a registry that already has prompts", async () => {
-    await mkdir(join(cwd, ".promptguard"), { recursive: true });
+    await mkdir(join(cwd, ".diditbreak"), { recursive: true });
     const now = new Date().toISOString();
     await writeFile(
-      join(cwd, ".promptguard/prompts.json"),
+      join(cwd, ".diditbreak/prompts.json"),
       JSON.stringify({ prompts: [{ name: "mine", content: "c", hash: "h", version: 3, createdAt: now, updatedAt: now }] }),
       "utf-8"
     );
 
     await runInitCommand({});
 
-    const registry = JSON.parse(await readFile(join(cwd, ".promptguard/prompts.json"), "utf-8"));
+    const registry = JSON.parse(await readFile(join(cwd, ".diditbreak/prompts.json"), "utf-8"));
     expect(registry.prompts.map((p: { name: string }) => p.name)).toEqual(["mine"]);
   });
 
@@ -87,13 +87,13 @@ describe("runInitCommand", () => {
 
   it("defaults to mock so no API key is needed", async () => {
     await runInitCommand({});
-    const config = await readFile(join(cwd, "promptguard.config.ts"), "utf-8");
+    const config = await readFile(join(cwd, "diditbreak.config.ts"), "utf-8");
     expect(config).not.toContain("API_KEY");
   });
 
   it("writes the requested provider", async () => {
     await runInitCommand({ provider: "groq" });
-    const config = await readFile(join(cwd, "promptguard.config.ts"), "utf-8");
+    const config = await readFile(join(cwd, "diditbreak.config.ts"), "utf-8");
 
     expect(config).toContain('provider: "groq"');
     expect(config).toContain("llama3-8b-8192");
@@ -101,21 +101,21 @@ describe("runInitCommand", () => {
 
   it("rejects an unknown provider without writing anything", async () => {
     expect(await runInitCommand({ provider: "nonsense" })).toBe(1);
-    await expect(readFile(join(cwd, "promptguard.config.ts"), "utf-8")).rejects.toThrow();
+    await expect(readFile(join(cwd, "diditbreak.config.ts"), "utf-8")).rejects.toThrow();
   });
 
   it("does not clobber existing files by default", async () => {
-    await writeFile(join(cwd, "promptguard.config.ts"), "// mine", "utf-8");
+    await writeFile(join(cwd, "diditbreak.config.ts"), "// mine", "utf-8");
 
     expect(await runInitCommand({})).toBe(0);
-    expect(await readFile(join(cwd, "promptguard.config.ts"), "utf-8")).toBe("// mine");
+    expect(await readFile(join(cwd, "diditbreak.config.ts"), "utf-8")).toBe("// mine");
   });
 
   it("overwrites when force is set", async () => {
-    await writeFile(join(cwd, "promptguard.config.ts"), "// mine", "utf-8");
+    await writeFile(join(cwd, "diditbreak.config.ts"), "// mine", "utf-8");
 
     await runInitCommand({ force: true });
-    expect(await readFile(join(cwd, "promptguard.config.ts"), "utf-8")).toContain("threshold");
+    expect(await readFile(join(cwd, "diditbreak.config.ts"), "utf-8")).toContain("threshold");
   });
 
   it("leaves .gitignore alone so the registry stays committed", async () => {
@@ -123,10 +123,10 @@ describe("runInitCommand", () => {
 
     await runInitCommand({});
 
-    // Ignoring .promptguard would silently break `--base` diffing, which reads
+    // Ignoring .diditbreak would silently break `--base` diffing, which reads
     // the registry out of git history.
     const gitignore = await readFile(join(cwd, ".gitignore"), "utf-8");
-    expect(gitignore).not.toContain(".promptguard");
+    expect(gitignore).not.toContain(".diditbreak");
   });
 
   it("is safe to run twice", async () => {

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import type { JudgeInput, JudgeResult } from "@promptguard/shared-types";
+import type { JudgeInput, JudgeResult } from "@diditbreak/shared-types";
 
 import type { LLMProvider } from "../llm-provider.js";
 

@@ -1,4 +1,4 @@
-import type { Assertion } from "@promptguard/shared-types";
+import type { Assertion } from "@diditbreak/shared-types";
 import { Ajv, type ValidateFunction } from "ajv";
 
 export interface AssertionFailure {

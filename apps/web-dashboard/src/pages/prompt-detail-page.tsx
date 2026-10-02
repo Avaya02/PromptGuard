@@ -27,7 +27,7 @@ export function PromptDetailPage(): JSX.Element {
         description="The prompt catalog or its run history failed to load."
         steps={[
           "Confirm the API server is running (GET /health should return status ok).",
-          "Check VITE_PROMPTGUARD_API_URL points at that server.",
+          "Check VITE_DIDITBREAK_API_URL points at that server.",
           "Reload the prompt list — this prompt may have been removed."
         ]}
         onRetry={() => {

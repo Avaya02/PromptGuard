@@ -1,4 +1,4 @@
-import type { RunResultRecord } from "@promptguard/shared-types";
+import type { RunResultRecord } from "@diditbreak/shared-types";
 
 interface ResultRow {
   id: string;

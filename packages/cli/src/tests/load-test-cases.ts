@@ -1,11 +1,11 @@
 import { readFile, readdir } from "node:fs/promises";
 import { relative, resolve } from "node:path";
 
-import type { EvaluationTestCase } from "@promptguard/evaluator";
-import { assertionSchema } from "@promptguard/shared-types";
+import type { EvaluationTestCase } from "@diditbreak/evaluator";
+import { assertionSchema } from "@diditbreak/shared-types";
 import { z } from "zod";
 
-import { PromptGuardCliError, isFileNotFound } from "../errors.js";
+import { CliError, isFileNotFound } from "../errors.js";
 
 const promptScopeSchema = z
   .union([z.string().min(1), z.array(z.string().min(1)).min(1)])
@@ -37,9 +37,9 @@ export async function loadTestCases(cwd: string, testsDir: string): Promise<Eval
     entries = await readdir(dirPath, { withFileTypes: true });
   } catch (error) {
     if (isFileNotFound(error)) {
-      throw new PromptGuardCliError(
+      throw new CliError(
         `Test directory not found: ${relative(cwd, dirPath) || dirPath}`,
-        "Run `promptguard init` to scaffold it, or point `testsDir` in promptguard.config.ts at an existing directory."
+        "Run `diditbreak init` to scaffold it, or point `testsDir` in diditbreak.config.ts at an existing directory."
       );
     }
 
@@ -52,9 +52,9 @@ export async function loadTestCases(cwd: string, testsDir: string): Promise<Eval
     .sort((a, b) => a.localeCompare(b));
 
   if (files.length === 0) {
-    throw new PromptGuardCliError(
+    throw new CliError(
       `No .json test files in ${relative(cwd, dirPath) || dirPath}`,
-      "Add a test file, or run `promptguard init` to generate a sample."
+      "Add a test file, or run `diditbreak init` to generate a sample."
     );
   }
 
@@ -69,7 +69,7 @@ export async function loadTestCases(cwd: string, testsDir: string): Promise<Eval
       parsed = testFileSchema.parse(JSON.parse(raw));
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
-      throw new PromptGuardCliError(
+      throw new CliError(
         `Invalid test file: ${fileName}`,
         `Expected {"cases":[{"input":"...","expect":"..."}]}. Parser said: ${detail}`
       );

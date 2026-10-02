@@ -1,12 +1,12 @@
-import type { EvaluationTestCase, PromptEvaluationResult } from "@promptguard/evaluator";
-import type { PromptGuardConfig, RegisteredPrompt } from "@promptguard/shared-types";
+import type { EvaluationTestCase, PromptEvaluationResult } from "@diditbreak/evaluator";
+import type { DiditbreakConfig, RegisteredPrompt } from "@diditbreak/shared-types";
 import chalk from "chalk";
 import ora from "ora";
 
 import { runLocalMode } from "./run-local-mode.js";
 import { runRemoteMode } from "./run-remote-mode.js";
 import { loadConfig } from "../config/load-config.js";
-import { PromptGuardCliError } from "../errors.js";
+import { CliError } from "../errors.js";
 import { EXIT } from "../exit-codes.js";
 import { loadBaselinePrompts } from "../prompts/load-baseline-prompts.js";
 import { loadCurrentPrompts } from "../prompts/load-current-prompts.js";
@@ -23,7 +23,7 @@ export interface TestCommandArgs {
 
 export interface TestModeContext {
   cwd: string;
-  config: PromptGuardConfig;
+  config: DiditbreakConfig;
   currentPrompts: RegisteredPrompt[];
   testCases: EvaluationTestCase[];
   baselineByName: Map<string, string>;
@@ -48,7 +48,7 @@ export function findUnknownScopes(
   return [...unknown].sort();
 }
 
-function modelLabel(config: PromptGuardConfig): string {
+function modelLabel(config: DiditbreakConfig): string {
   const generation = `${config.generationModel.provider}:${config.generationModel.model}`;
   const judge = `${config.judgeModel.provider}:${config.judgeModel.model}`;
   return generation === judge ? generation : `${generation} → judge ${judge}`;
@@ -81,7 +81,7 @@ export async function runTestCommand(args: TestCommandArgs): Promise<number> {
 
     const context: TestModeContext = { cwd, config, currentPrompts, testCases, baselineByName };
 
-    const apiUrl = process.env.PROMPTGUARD_API_URL;
+    const apiUrl = process.env.DIDITBREAK_API_URL;
     let promptResults: PromptEvaluationResult[];
     let remoteStatus: "COMPLETED" | "FAILED" | null = null;
 
@@ -105,7 +105,7 @@ export async function runTestCommand(args: TestCommandArgs): Promise<number> {
       const caseCount = promptResults.reduce((total, result) => total + result.totalTests, 0);
       console.log(
         chalk.dim(
-          `\n PromptGuard ${CLI_VERSION} · ${modelLabel(config)} · ${promptResults.length} prompt${promptResults.length === 1 ? "" : "s"} · ${caseCount} case${caseCount === 1 ? "" : "s"}`
+          `\n diditbreak ${CLI_VERSION} · ${modelLabel(config)} · ${promptResults.length} prompt${promptResults.length === 1 ? "" : "s"} · ${caseCount} case${caseCount === 1 ? "" : "s"}`
         )
       );
 
@@ -117,7 +117,7 @@ export async function runTestCommand(args: TestCommandArgs): Promise<number> {
 
       if (args.base && baselineByName.size === 0) {
         console.log(
-          `${chalk.yellow(" ⚠")} no baseline found at ${chalk.bold(args.base)} — is .promptguard/prompts.json committed there?`
+          `${chalk.yellow(" ⚠")} no baseline found at ${chalk.bold(args.base)} — is .diditbreak/prompts.json committed there?`
         );
       }
 
@@ -132,8 +132,8 @@ export async function runTestCommand(args: TestCommandArgs): Promise<number> {
   } catch (error) {
     spinner.stop();
 
-    const message = error instanceof Error ? error.message : "PromptGuard test run failed.";
-    const hint = error instanceof PromptGuardCliError ? error.hint : undefined;
+    const message = error instanceof Error ? error.message : "diditbreak test run failed.";
+    const hint = error instanceof CliError ? error.hint : undefined;
 
     if (json) {
       process.stdout.write(

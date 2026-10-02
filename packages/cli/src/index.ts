@@ -11,7 +11,7 @@ export async function runCli(argv: string[]): Promise<void> {
   const cli = yargs(hideBin(argv));
 
   await cli
-    .scriptName("promptguard")
+    .scriptName("diditbreak")
     .usage("$0 <command> [options]\n\nRegression tests for LLM prompts. Deterministic checks run free; an LLM judge runs only when needed.")
     .command(
       "init",
@@ -22,7 +22,7 @@ export async function runCli(argv: string[]): Promise<void> {
             type: "string",
             default: "mock",
             choices: ["mock", "ollama", "openai", "anthropic", "gemini", "groq"],
-            describe: "Provider to write into promptguard.config.ts"
+            describe: "Provider to write into diditbreak.config.ts"
           })
           .option("force", {
             type: "boolean",

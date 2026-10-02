@@ -4,13 +4,13 @@ import { join } from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { PromptGuardCliError } from "../errors.js";
+import { CliError } from "../errors.js";
 import { loadTestCases } from "./load-test-cases.js";
 
 let cwd: string;
 
 beforeEach(async () => {
-  cwd = await mkdtemp(join(tmpdir(), "promptguard-cli-"));
+  cwd = await mkdtemp(join(tmpdir(), "diditbreak-cli-"));
 });
 
 afterEach(async () => {
@@ -27,17 +27,17 @@ describe("loadTestCases", () => {
     it("raises an actionable error instead of a raw ENOENT", async () => {
       const error = await loadTestCases(cwd, "prompt_tests").catch((e: unknown) => e);
 
-      expect(error).toBeInstanceOf(PromptGuardCliError);
-      expect((error as PromptGuardCliError).message).toContain("Test directory not found");
-      expect((error as PromptGuardCliError).hint).toContain("promptguard init");
+      expect(error).toBeInstanceOf(CliError);
+      expect((error as CliError).message).toContain("Test directory not found");
+      expect((error as CliError).hint).toContain("diditbreak init");
     });
 
     it("raises an actionable error for an empty directory", async () => {
       await mkdir(join(cwd, "prompt_tests"), { recursive: true });
 
       const error = await loadTestCases(cwd, "prompt_tests").catch((e: unknown) => e);
-      expect(error).toBeInstanceOf(PromptGuardCliError);
-      expect((error as PromptGuardCliError).message).toContain("No .json test files");
+      expect(error).toBeInstanceOf(CliError);
+      expect((error as CliError).message).toContain("No .json test files");
     });
 
     it("ignores non-json files", async () => {
@@ -95,8 +95,8 @@ describe("loadTestCases", () => {
       await writeTests("a.json", { cases: [{ input: "orphan" }] });
 
       const error = await loadTestCases(cwd, "prompt_tests").catch((e: unknown) => e);
-      expect(error).toBeInstanceOf(PromptGuardCliError);
-      expect((error as PromptGuardCliError).hint).toContain("expect");
+      expect(error).toBeInstanceOf(CliError);
+      expect((error as CliError).hint).toContain("expect");
     });
 
     it("reports the offending file on malformed JSON", async () => {
@@ -104,15 +104,15 @@ describe("loadTestCases", () => {
       await writeFile(join(cwd, "prompt_tests", "broken.json"), "{not json", "utf-8");
 
       const error = await loadTestCases(cwd, "prompt_tests").catch((e: unknown) => e);
-      expect(error).toBeInstanceOf(PromptGuardCliError);
-      expect((error as PromptGuardCliError).message).toContain("broken.json");
+      expect(error).toBeInstanceOf(CliError);
+      expect((error as CliError).message).toContain("broken.json");
     });
 
     it("rejects an unknown assert key", async () => {
       await writeTests("a.json", { cases: [{ input: "x", assert: { contain: "typo" } }] });
 
       // Strict schema: a typo'd check must fail loudly rather than pass vacuously.
-      await expect(loadTestCases(cwd, "prompt_tests")).rejects.toThrow(PromptGuardCliError);
+      await expect(loadTestCases(cwd, "prompt_tests")).rejects.toThrow(CliError);
     });
 
     it("uses a case's own name when given", async () => {
@@ -149,7 +149,7 @@ describe("loadTestCases", () => {
 
     it("rejects an empty cases array", async () => {
       await writeTests("a.json", { cases: [] });
-      await expect(loadTestCases(cwd, "prompt_tests")).rejects.toThrow(PromptGuardCliError);
+      await expect(loadTestCases(cwd, "prompt_tests")).rejects.toThrow(CliError);
     });
   });
 });

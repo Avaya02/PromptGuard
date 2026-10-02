@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 
-import type { RegisteredPrompt } from "@promptguard/shared-types";
+import type { RegisteredPrompt } from "@diditbreak/shared-types";
 import { z } from "zod";
 
 import { hashPrompt } from "./registry/hash.js";

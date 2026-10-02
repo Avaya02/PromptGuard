@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 
-import type { PromptDiffRecord } from "@promptguard/shared-types";
+import type { PromptDiffRecord } from "@diditbreak/shared-types";
 
 export async function buildPromptDiffs(
   prisma: PrismaClient,

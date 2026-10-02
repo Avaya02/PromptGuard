@@ -1,4 +1,4 @@
-import type { PromptEvaluationResult } from "@promptguard/evaluator";
+import type { PromptEvaluationResult } from "@diditbreak/evaluator";
 
 export interface RunSummaryStats {
   prompts: number;

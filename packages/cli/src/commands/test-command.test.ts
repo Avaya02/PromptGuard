@@ -12,7 +12,7 @@ let errors: string[];
 
 beforeEach(async () => {
   originalCwd = process.cwd();
-  cwd = await mkdtemp(join(tmpdir(), "promptguard-test-cmd-"));
+  cwd = await mkdtemp(join(tmpdir(), "diditbreak-test-cmd-"));
   process.chdir(cwd);
 
   errors = [];
@@ -21,7 +21,7 @@ beforeEach(async () => {
   vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => {
     errors.push(args.map(String).join(" "));
   });
-  delete process.env.PROMPTGUARD_API_URL;
+  delete process.env.DIDITBREAK_API_URL;
 });
 
 afterEach(async () => {
@@ -36,7 +36,7 @@ async function scaffold(options: {
   prompts?: Array<{ name: string; content: string }>;
 } = {}): Promise<void> {
   await writeFile(
-    join(cwd, "promptguard.config.ts"),
+    join(cwd, "diditbreak.config.ts"),
     `export default {
       threshold: ${options.threshold ?? 0.1},
       testsDir: "prompt_tests",
@@ -57,9 +57,9 @@ async function scaffold(options: {
   );
 
   const now = new Date().toISOString();
-  await mkdir(join(cwd, ".promptguard"), { recursive: true });
+  await mkdir(join(cwd, ".diditbreak"), { recursive: true });
   await writeFile(
-    join(cwd, ".promptguard", "prompts.json"),
+    join(cwd, ".diditbreak", "prompts.json"),
     JSON.stringify({
       prompts: (options.prompts ?? [{ name: "greeter", content: "Say hello." }]).map((p) => ({
         ...p,
@@ -132,15 +132,15 @@ describe("runTestCommand error handling", () => {
   // failed check from a broken job.
   it("returns 2 and prints a hint when config is missing", async () => {
     expect(await runTestCommand({})).toBe(2);
-    expect(errors.join("\n")).toContain("promptguard init");
+    expect(errors.join("\n")).toContain("diditbreak init");
   });
 
-  it("returns 2 and points at `promptguard add` when the registry is empty", async () => {
+  it("returns 2 and points at `diditbreak add` when the registry is empty", async () => {
     await scaffold();
-    await writeFile(join(cwd, ".promptguard", "prompts.json"), '{"prompts":[]}', "utf-8");
+    await writeFile(join(cwd, ".diditbreak", "prompts.json"), '{"prompts":[]}', "utf-8");
 
     expect(await runTestCommand({})).toBe(2);
-    expect(errors.join("\n")).toContain("promptguard add");
+    expect(errors.join("\n")).toContain("diditbreak add");
   });
 
   it("returns 2 and prints a hint when the tests directory is missing", async () => {
@@ -148,7 +148,7 @@ describe("runTestCommand error handling", () => {
     await rm(join(cwd, "prompt_tests"), { recursive: true, force: true });
 
     expect(await runTestCommand({})).toBe(2);
-    expect(errors.join("\n")).toContain("promptguard init");
+    expect(errors.join("\n")).toContain("diditbreak init");
   });
 });
 
@@ -186,8 +186,8 @@ describe("runTestCommand --json", () => {
 
     const report = JSON.parse(stdout.join(""));
     expect(report.pass).toBe(false);
-    expect(report.error.message).toContain("promptguard.config.ts");
-    expect(report.error.hint).toContain("promptguard init");
+    expect(report.error.message).toContain("diditbreak.config.ts");
+    expect(report.error.hint).toContain("diditbreak init");
   });
 });
 

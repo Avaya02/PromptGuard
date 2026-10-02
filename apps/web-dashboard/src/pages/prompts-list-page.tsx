@@ -21,7 +21,7 @@ export function PromptsListPage(): JSX.Element {
         steps={[
           "Start the stack: docker compose up",
           "Confirm the API answers: curl http://localhost:4000/health",
-          "If the API runs elsewhere, set VITE_PROMPTGUARD_API_URL and rebuild the dashboard."
+          "If the API runs elsewhere, set VITE_DIDITBREAK_API_URL and rebuild the dashboard."
         ]}
         onRetry={() => void promptsQuery.refetch()}
       />
@@ -34,7 +34,7 @@ export function PromptsListPage(): JSX.Element {
     return (
       <EmptyState
         title="No prompts registered yet"
-        description="Seed the demo data with `docker compose exec api-server npm run seed`, or register a prompt with `promptguard add` and run `promptguard test`."
+        description="Seed the demo data with `docker compose exec api-server npm run seed`, or register a prompt with `diditbreak add` and run `diditbreak test`."
       />
     );
   }

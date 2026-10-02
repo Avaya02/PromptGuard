@@ -1,4 +1,4 @@
-import type { RunResultRecord, RunSummary } from "@promptguard/shared-types";
+import type { RunResultRecord, RunSummary } from "@diditbreak/shared-types";
 import { useEffect, useRef, useState } from "react";
 
 import { apiBaseUrl } from "../lib/env";

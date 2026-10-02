@@ -1,16 +1,16 @@
-# promptguard
+# diditbreak
 
 Regression tests for LLM prompts. Change a prompt, run one command, find out whether it still behaves.
 
 Deterministic checks (`contains`, `regex`, JSON Schema, latency) run locally and cost nothing. An LLM judge runs only for cases that pass those checks and carry a rubric. Works offline out of the box.
 
 ```bash
-npx promptguard init
-npx promptguard test
+npx diditbreak init
+npx diditbreak test
 ```
 
 ```
- PromptGuard 0.1.0 · mock:mock · 2 prompts · 4 cases
+ diditbreak 0.1.0 · mock:mock · 2 prompts · 4 cases
 
  sql-generator
    ✓ never-drops-tables     assert     0ms
@@ -34,10 +34,10 @@ Single file, zero dependencies, Node 20+.
 
 | Command | What it does |
 |---|---|
-| `promptguard init` | Scaffold config, a sample prompt, and a sample suite that passes on first run |
-| `promptguard add <name> [file]` | Register a prompt, or update it if the content changed. Also takes `--content` or stdin |
-| `promptguard test` | Run the suite. `--base <ref>` compares against a git ref; `--json` for machine output |
-| `promptguard doctor` | Check config, provider keys, prompts, test files, and git setup, with the fix for each problem |
+| `diditbreak init` | Scaffold config, a sample prompt, and a sample suite that passes on first run |
+| `diditbreak add <name> [file]` | Register a prompt, or update it if the content changed. Also takes `--content` or stdin |
+| `diditbreak test` | Run the suite. `--base <ref>` compares against a git ref; `--json` for machine output |
+| `diditbreak doctor` | Check config, provider keys, prompts, test files, and git setup, with the fix for each problem |
 
 **Exit codes:** `0` pass · `1` a prompt regressed · `2` setup or configuration error. A pipeline can tell a failed check from a broken job.
 
@@ -76,7 +76,7 @@ A failing check stops the case before any model call. `expect` is a plain-Englis
 
 ## Providers
 
-Set in `promptguard.config.ts`, or pick one at `init --provider <name>`.
+Set in `diditbreak.config.ts`, or pick one at `init --provider <name>`.
 
 | `provider` | Key | |
 |---|---|---|
@@ -95,10 +95,10 @@ Every provider retries 429 and 5xx with backoff, uses native JSON output where a
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0          # baselines are read from git history
-- run: npx promptguard test --base origin/${{ github.base_ref }}
+- run: npx diditbreak test --base origin/${{ github.base_ref }}
 ```
 
-Commit `.promptguard/prompts.json`. `--base` reads the previous version of each prompt from git, so an ignored registry gives the comparison nothing to compare against. `promptguard doctor` checks for this.
+Commit `.diditbreak/prompts.json`. `--base` reads the previous version of each prompt from git, so an ignored registry gives the comparison nothing to compare against. `diditbreak doctor` checks for this.
 
 ## More
 

@@ -1,7 +1,7 @@
 {
-  "name": "@promptguard/sdk",
+  "name": "@diditbreak/sdk",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,7 +17,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@promptguard/shared-types": "workspace:*",
+    "@diditbreak/shared-types": "workspace:*",
     "zod": "^3.24.2"
   }
 }

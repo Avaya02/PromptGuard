@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import type { PromptRunJobPayload } from "@promptguard/shared-types";
+import type { PromptRunJobPayload } from "@diditbreak/shared-types";
 import type { Queue } from "bullmq";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

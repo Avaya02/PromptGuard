@@ -1,4 +1,4 @@
-# Contributing to PromptGuard
+# Contributing to diditbreak
 
 ## Setup
 
@@ -18,8 +18,8 @@ Workspace packages resolve through `dist/`, so a fresh clone needs `build` befor
 docker compose up -d postgres redis
 cp apps/api-server/.env.example apps/api-server/.env
 cp apps/worker/.env.example apps/worker/.env
-corepack pnpm --filter @promptguard/api-server prisma:migrate
-corepack pnpm --filter @promptguard/api-server seed
+corepack pnpm --filter @diditbreak/api-server prisma:migrate
+corepack pnpm --filter @diditbreak/api-server seed
 ```
 
 Postgres is published on host port **5433** to avoid colliding with a local install. Inside the compose network it is still 5432 — both `.env.example` files use 5433 because they are for processes running on the host.
@@ -27,9 +27,9 @@ Postgres is published on host port **5433** to avoid colliding with a local inst
 ### Running locally
 
 ```bash
-corepack pnpm --filter @promptguard/api-server dev
-corepack pnpm --filter @promptguard/worker dev
-corepack pnpm --filter @promptguard/web-dashboard dev
+corepack pnpm --filter @diditbreak/api-server dev
+corepack pnpm --filter @diditbreak/worker dev
+corepack pnpm --filter @diditbreak/web-dashboard dev
 ```
 
 ## Verification
@@ -84,7 +84,7 @@ The Prisma double keeps the suite runnable with no Docker and no database, which
 
 ```bash
 # Edit apps/api-server/prisma/schema.prisma, then:
-corepack pnpm --filter @promptguard/api-server exec prisma migrate dev --name your_change
+corepack pnpm --filter @diditbreak/api-server exec prisma migrate dev --name your_change
 ```
 
 Migrations are checked in and applied with `prisma migrate deploy` on container start. Never edit an applied migration; add a new one.

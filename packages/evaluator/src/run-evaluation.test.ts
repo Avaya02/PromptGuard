@@ -1,5 +1,5 @@
-import type { JudgeResult } from "@promptguard/shared-types";
-import type { LLMProvider } from "@promptguard/llm-provider";
+import type { JudgeResult } from "@diditbreak/shared-types";
+import type { LLMProvider } from "@diditbreak/llm-provider";
 import { describe, expect, it, vi } from "vitest";
 
 import { runEvaluation } from "./run-evaluation.js";

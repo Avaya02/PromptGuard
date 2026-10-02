@@ -1,4 +1,4 @@
-import type { CaseEvaluationResult } from "@promptguard/shared-types";
+import type { CaseEvaluationResult } from "@diditbreak/shared-types";
 
 import { toJudgeCase } from "../prompts/judge-templates.js";
 import type { EvaluationTestCase, RunEvaluationInput } from "../types.js";

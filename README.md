@@ -1,17 +1,17 @@
-# PromptGuard
+# diditbreak
 
 [![CI](https://github.com/Avaya02/PromptGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/Avaya02/PromptGuard/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/promptguard)](https://www.npmjs.com/package/promptguard)
+[![npm](https://img.shields.io/npm/v/diditbreak)](https://www.npmjs.com/package/diditbreak)
 
 **Regression tests for LLM prompts.** Change a prompt, run one command, find out whether it still behaves.
 
 ```bash
-npx promptguard init     # config, a sample prompt, and a suite that passes first time
-npx promptguard test
+npx diditbreak init     # config, a sample prompt, and a suite that passes first time
+npx diditbreak test
 ```
 
 ```
- PromptGuard 0.1.0 · mock:mock · 2 prompts · 4 cases
+ diditbreak 0.1.0 · mock:mock · 2 prompts · 4 cases
 
  sql-generator
    ✓ never-drops-tables     assert     0ms
@@ -39,7 +39,7 @@ Prompts are code you can't diff meaningfully. Changing `"Be concise"` to `"Be co
 
 The usual answers both fail. **Exact-match assertions** break on harmless rewording, so teams delete them. **LLM-judging everything** is slow and costs money on every commit, so teams run it rarely.
 
-PromptGuard splits the work. Deterministic checks (`contains`, `regex`, JSON Schema, latency budgets) run locally for free and catch most real breakage: malformed JSON, apology preambles, destructive SQL, blown latency. **A failing check stops the case before any model is called.** Only cases that pass and carry a rubric reach the LLM judge.
+diditbreak splits the work. Deterministic checks (`contains`, `regex`, JSON Schema, latency budgets) run locally for free and catch most real breakage: malformed JSON, apology preambles, destructive SQL, blown latency. **A failing check stops the case before any model is called.** Only cases that pass and carry a rubric reach the LLM judge.
 
 So the whole suite can run on every commit, and tokens get spent only where semantic judgement is actually needed.
 
@@ -47,10 +47,10 @@ So the whole suite can run on every commit, and tokens get spent only where sema
 
 | Command | |
 |---|---|
-| `promptguard init [--provider <name>]` | Scaffold a working project: config, a sample prompt, a passing suite |
-| `promptguard add <name> [file]` | Register a prompt, or update it if its content changed (`--content` and stdin work too) |
-| `promptguard test [--base <ref>] [--json]` | Run the suite; compare against a git ref; machine-readable output for CI |
-| `promptguard doctor` | Check config, provider keys, prompts, test files and git setup, and print the fix for anything wrong |
+| `diditbreak init [--provider <name>]` | Scaffold a working project: config, a sample prompt, a passing suite |
+| `diditbreak add <name> [file]` | Register a prompt, or update it if its content changed (`--content` and stdin work too) |
+| `diditbreak test [--base <ref>] [--json]` | Run the suite; compare against a git ref; machine-readable output for CI |
+| `diditbreak doctor` | Check config, provider keys, prompts, test files and git setup, and print the fix for anything wrong |
 
 A few details that matter in daily use:
 
@@ -109,16 +109,16 @@ All providers retry 429 and 5xx with exponential backoff and jitter, use structu
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0                       # baselines are read from git history
-- run: npx promptguard test --base origin/${{ github.base_ref }}
+- run: npx diditbreak test --base origin/${{ github.base_ref }}
 ```
 
-Commit `.promptguard/prompts.json`. `--base` reads each prompt's previous version with `git show`, so an ignored registry leaves nothing to compare against.
+Commit `.diditbreak/prompts.json`. `--base` reads each prompt's previous version with `git show`, so an ignored registry leaves nothing to compare against.
 
 ---
 
 ## Beyond the CLI: the evaluation service
 
-The CLI runs everything in-process, and for most teams that's all they need. Set `PROMPTGUARD_API_URL` and the same command submits the run to a self-hosted service instead, which adds what a single process can't:
+The CLI runs everything in-process, and for most teams that's all they need. Set `DIDITBREAK_API_URL` and the same command submits the run to a self-hosted service instead, which adds what a single process can't:
 
 | | CLI alone | With the service |
 |---|---|---|
@@ -128,22 +128,22 @@ The CLI runs everything in-process, and for most teams that's all they need. Set
 | Prompt versions | the git registry | content-hashed history, diffed per run |
 | Visibility | stdout | dashboard with a Monaco diff viewer, live SSE progress, a playground |
 
-It's fully self-hosted with no SaaS dependency: six providers, no vendor coupling. If all you want is a mature local eval runner, [promptfoo](https://promptfoo.dev) is excellent. PromptGuard's distinct piece is the execution layer behind it.
+It's fully self-hosted with no SaaS dependency: six providers, no vendor coupling. If all you want is a mature local eval runner, [promptfoo](https://promptfoo.dev) is excellent. diditbreak's distinct piece is the execution layer behind it.
 
 ### Architecture
 
 ```mermaid
 flowchart LR
   subgraph dev["Developer machine"]
-    SDK["definePrompt()"] --> REG[".promptguard/prompts.json<br/>(committed to git)"]
+    SDK["definePrompt()"] --> REG[".diditbreak/prompts.json<br/>(committed to git)"]
     TESTS["prompt_tests/*.json"]
-    CLI["promptguard test"]
+    CLI["diditbreak test"]
     REG --> CLI
     TESTS --> CLI
   end
 
   CLI -->|"local mode"| EVAL
-  CLI -->|"PROMPTGUARD_API_URL set"| API
+  CLI -->|"DIDITBREAK_API_URL set"| API
 
   subgraph svc["Self-hosted services"]
     API["Fastify API"] --> PG[("PostgreSQL<br/>runs, versions, results")]
@@ -208,7 +208,7 @@ packages/
   llm-provider/    Six providers, retry, pricing, provider factory
   evaluator/       Two-stage pipeline, bounded concurrency
   sdk/             definePrompt + content-hashed registry
-  cli/             promptguard init / test
+  cli/             diditbreak init / test
 ```
 
 ## Development
