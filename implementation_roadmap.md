@@ -1,22 +1,22 @@
-# PromptGuard — Implementation Roadmap
+# diditbreak — Implementation Roadmap
 
-This document outlines the step-by-step build plan for the PromptGuard project. It is designed to be executed sequentially by a coding agent.
+This document outlines the step-by-step build plan for the diditbreak project. It is designed to be executed sequentially by a coding agent.
 
 ## Phase 1: Monorepo Foundation & Core Packages
 **Goal:** Establish the pnpm workspace and build the shared utility packages.
 
 ### Step 1.1: Project Initialization
-- Create the root directory `promptguard` (or use existing).
+- Create the root directory `diditbreak` (or use existing).
 - Initialize a `pnpm` workspace with `pnpm init`.
 - Create `pnpm-workspace.yaml` defining `packages/*` and `apps/*`.
 - Set up root `tsconfig.json` for base TypeScript configuration.
 - Set up ESLint and Prettier at the root level.
-- Create a basic `promptguard.config.ts` blueprint.
+- Create a basic `diditbreak.config.ts` blueprint.
 
 ### Step 1.2: `shared-types` Package (`packages/shared-types`)
 - **Action:** Initialize `packages/shared-types` with `pnpm init` and `tsc --init`.
 - **Implement:** 
-  - Define core interfaces: `RegisteredPrompt`, `JudgeInput`, `JudgeResult`, `TestCases`, `EvaluationResult`, `PromptGuardConfig`.
+  - Define core interfaces: `RegisteredPrompt`, `JudgeInput`, `JudgeResult`, `TestCases`, `EvaluationResult`, `diditbreakConfig`.
   - Export all types from `src/index.ts`.
 - **Build:** Add a build script (using `tsc`) to compile types and emit declarations.
 
@@ -44,19 +44,19 @@ This document outlines the step-by-step build plan for the PromptGuard project. 
 ### Step 2.2: `sdk` Package (`packages/sdk`)
 - **Action:** Initialize `packages/sdk`. Add dependencies on `shared-types`.
 - **Implement:**
-  - `definePrompt(name, content)`: Hashes content, writes to local registry `.promptguard/prompts.json`.
+  - `definePrompt(name, content)`: Hashes content, writes to local registry `.diditbreak/prompts.json`.
   - Helpers to read the registry for the CLI during execution.
 
 ### Step 2.3: `cli` Package (`packages/cli`) - Core Runner
 - **Action:** Initialize `packages/cli`. Add dependencies on `yargs`, `chalk`, `ora`, `execa`, `shared-types`, `evaluator`, `llm-provider`.
 - **Implement:**
-  - Create CLI entrypoint (e.g., `bin/prompt-guard.ts`).
+  - Create CLI entrypoint (e.g., `bin/diditbreak.ts`).
   - Implement Command: `test [--base <branch/commit>]`.
-  - Build Config loader: Parse `promptguard.config.ts`.
+  - Build Config loader: Parse `diditbreak.config.ts`.
   - Build Test loader: Parse test files from `testsDir` (`prompt_tests/`).
   - Orchestration: Resolve baseline prompt, instantiate the `generationModel` and `judgeModel`, and call the `evaluator`.
   - Reporter module: Output a formatted success/failure table to terminal with drift scores and failure reasons.
-- **Milestone Check:** Verify `npx prompt-guard test` works fully end-to-end locally with Ollama/mock models.
+- **Milestone Check:** Verify `npx diditbreak test` works fully end-to-end locally with Ollama/mock models.
 
 ## Phase 3: Infrastructure & Backend
 **Goal:** Set up persistent storage, background processing, and the API server for CI tracking.
@@ -86,7 +86,7 @@ This document outlines the step-by-step build plan for the PromptGuard project. 
 ### Step 3.4: CLI CI Integration
 - **Action:** Switch to `packages/cli`.
 - **Implement:**
-  - Update `test` command: Check if `PROMPTGUARD_API_URL` environment variable exists.
+  - Update `test` command: Check if `DIDITBREAK_API_URL` environment variable exists.
   - If existing, bypass local evaluator. Send `POST /runs` to API with current test cases and branch info.
   - Implement a polling mechanism (`ora` spinner) to wait for `GET /runs/:id` to reach a `completed` status.
   - Print the remote results to the local terminal.
@@ -105,7 +105,7 @@ This document outlines the step-by-step build plan for the PromptGuard project. 
 ### Step 4.2: CI Example & Documentation
 - **Action:** Provide usage documentation.
 - **Implement:**
-  - Write `.github/workflows/promptguard.yml` providing a GitHub Action template.
+  - Write `.github/workflows/diditbreak.yml` providing a GitHub Action template.
   - Write standard `README.md` containing CLI setup, config examples, and architecture overview.
 
 ---

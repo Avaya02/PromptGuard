@@ -1,6 +1,6 @@
-# PromptGuard — Full Project Build Specification (Super Prompt)
+# diditbreak — Full Project Build Specification (Super Prompt)
 
-You are a senior software engineer tasked with building a production‑grade developer infrastructure tool named **PromptGuard**.
+You are a senior software engineer tasked with building a production‑grade developer infrastructure tool named **diditbreak**.
 
 The goal: create a CI‑integrated framework that detects behavioral regressions in LLM prompts using semantic evaluation instead of string comparison.
 
@@ -14,7 +14,7 @@ Minimal comments — only 1‑2 line comments where intent is not obvious.
 
 ## Core Concept
 
-PromptGuard allows developers to:
+diditbreak allows developers to:
 
 1. Register prompts in their codebase
 2. Write behavioral test cases
@@ -32,7 +32,7 @@ The system must work fully locally by default (no external data sharing).
 Monorepo structure using pnpm workspaces:
 
 ```
-promptguard/
+diditbreak/
   apps/
     web-dashboard/
     api-server/
@@ -112,7 +112,7 @@ Behavior:
 Local registry file:
 
 ```
-.promptguard/prompts.json
+.diditbreak/prompts.json
 ```
 
 ---
@@ -122,9 +122,9 @@ Local registry file:
 Command:
 
 ```bash
-npx prompt-guard test
+npx diditbreak test
 # or with explicit baseline
-npx prompt-guard test --base main
+npx diditbreak test --base main
 ```
 
 Flow (Standalone Local Mode):
@@ -137,7 +137,7 @@ Flow (Standalone Local Mode):
 6. Print terminal report
 7. Exit non-zero on failure
 
-Flow (CI / Dashboard Mode - active if `PROMPTGUARD_API_URL` is set):
+Flow (CI / Dashboard Mode - active if `DIDITBREAK_API_URL` is set):
 
 1. Send evaluation payload to API server
 2. Worker processes jobs
@@ -155,7 +155,7 @@ Output must include:
 
 ### 3. Config System
 
-Create `promptguard.config.ts`
+Create `diditbreak.config.ts`
 
 Example:
 
@@ -368,7 +368,7 @@ fail if driftScore > threshold
 Developers run:
 
 ```
-npx prompt-guard test
+npx diditbreak test
 ```
 
 CI exits with non‑zero code if regression detected.
@@ -417,8 +417,8 @@ Produce a working tool where a developer can:
 
 ```
 npm install
-npx prompt-guard init
-npx prompt-guard test
+npx diditbreak init
+npx diditbreak test
 ```
 
 And receive a semantic regression report for prompt changes.
