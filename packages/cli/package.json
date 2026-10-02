@@ -45,8 +45,8 @@
     "test:coverage": "vitest run --coverage",
     "prepublishOnly": "pnpm run build"
   },
-  "dependencies": {},
   "devDependencies": {
+    "@diditbreak/agent-eval": "workspace:^",
     "@diditbreak/evaluator": "workspace:*",
     "@diditbreak/llm-provider": "workspace:*",
     "@diditbreak/sdk": "workspace:*",
