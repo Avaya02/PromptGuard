@@ -62,7 +62,7 @@ describe("checkNode", () => {
 describe("runDoctorChecks", () => {
   it("passes a freshly initialised, committed project", async () => {
     await gitInit();
-    await runInitCommand({});
+    await runInitCommand({ prompts: true });
     await run("git", ["add", "-A"], { cwd });
     await run("git", ["commit", "-q", "-m", "init"], { cwd });
 
@@ -85,7 +85,7 @@ describe("runDoctorChecks", () => {
 
   it("warns when the registry is not committed", async () => {
     await gitInit();
-    await runInitCommand({});
+    await runInitCommand({ prompts: true });
 
     const baseline = find(await runDoctorChecks(environment()), "Baseline");
     expect(baseline?.status).toBe("warn");
@@ -94,7 +94,7 @@ describe("runDoctorChecks", () => {
 
   it("fails when the registry is gitignored", async () => {
     await gitInit();
-    await runInitCommand({});
+    await runInitCommand({ prompts: true });
     await writeFile(join(cwd, ".gitignore"), ".diditbreak\n", "utf-8");
 
     // The silent failure this check exists to catch: --base would compare
@@ -105,12 +105,12 @@ describe("runDoctorChecks", () => {
   });
 
   it("warns outside a git repository", async () => {
-    await runInitCommand({});
+    await runInitCommand({ prompts: true });
     expect(find(await runDoctorChecks(environment()), "Baseline")?.status).toBe("warn");
   });
 
   it("fails a hosted provider whose key is missing, naming the variable", async () => {
-    await runInitCommand({ provider: "groq" });
+    await runInitCommand({ prompts: true, provider: "groq" });
 
     const results = await runDoctorChecks(environment());
     const generation = find(results, "Generation model");
@@ -119,14 +119,14 @@ describe("runDoctorChecks", () => {
   });
 
   it("passes a hosted provider once its key is set", async () => {
-    await runInitCommand({ provider: "anthropic" });
+    await runInitCommand({ prompts: true, provider: "anthropic" });
 
     const results = await runDoctorChecks(environment({ env: { ANTHROPIC_API_KEY: "k" } }));
     expect(find(results, "Judge model")?.status).toBe("ok");
   });
 
   it("accepts a keyless OpenAI-compatible server", async () => {
-    await runInitCommand({});
+    await runInitCommand({ prompts: true });
     await writeFile(
       join(cwd, "diditbreak.config.ts"),
       `export default {
@@ -144,7 +144,7 @@ describe("runDoctorChecks", () => {
   });
 
   it("checks that Ollama is reachable for local models", async () => {
-    await runInitCommand({ provider: "ollama" });
+    await runInitCommand({ prompts: true, provider: "ollama" });
 
     const down = await runDoctorChecks(
       environment({ fetch: vi.fn(async () => { throw new Error("ECONNREFUSED"); }) as unknown as typeof fetch })
@@ -156,7 +156,7 @@ describe("runDoctorChecks", () => {
   });
 
   it("warns about test files targeting unregistered prompts", async () => {
-    await runInitCommand({});
+    await runInitCommand({ prompts: true });
     await writeFile(
       join(cwd, "prompt_tests/extra.json"),
       JSON.stringify({ prompts: ["sql-gen"], cases: [{ input: "x", expect: "y" }] }),

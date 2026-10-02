@@ -1,0 +1,31 @@
+prompt: |
+  Add a `slugify(text)` function to src/strings.js. It lowercases the text,
+  trims it, replaces every run of non-alphanumeric characters with a single
+  hyphen, and strips leading and trailing hyphens. Export it.
+
+# A hidden check the agent never sees, so it cannot write tests that game it.
+verify: >-
+  node -e "import('./src/strings.js').then(({ slugify: s }) => process.exit(
+  s('  Hello, World!  ') === 'hello-world' && s('Rock & Roll') === 'rock-roll' && s('--x--') === 'x' ? 0 : 1))"
+
+checks:
+  must_change: src/strings.js
+  must_not_change: package.json
+  forbid_commands: npm install
+
+# Behaviour of the free, offline mock agent (`--agent mock`).
+mock:
+  files:
+    src/strings.js: |
+      export function capitalize(text) {
+        return text.length === 0 ? text : text[0].toUpperCase() + text.slice(1);
+      }
+      export function slugify(text) {
+        return text.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+      }
+  requires: node --test
+  breaks_on: Jest
+  flaky: 0.1
+  commands:
+    - run: npm install --save-dev jest
+      when: Jest

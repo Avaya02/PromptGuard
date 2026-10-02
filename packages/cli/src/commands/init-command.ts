@@ -4,11 +4,17 @@ import { dirname, relative, resolve } from "node:path";
 import { definePrompt, readPromptRegistry } from "@diditbreak/sdk";
 import chalk from "chalk";
 
+import { runAgentInit, runDemoInit } from "./init-agent.js";
+
 export interface InitCommandArgs {
   /** Provider written into the generated config. Defaults to the zero-cost mock. */
   provider?: string | undefined;
   /** Overwrite files that already exist. */
   force?: boolean | undefined;
+  /** Scaffold the prompt regression suite instead of an agent experiment. */
+  prompts?: boolean | undefined;
+  /** Build a ready-made demo repository in this directory instead. */
+  demo?: string | undefined;
 }
 
 const PROVIDER_PRESETS: Record<string, { generation: string; judge: string; note: string }> = {
@@ -130,6 +136,16 @@ async function writeIfAbsent(
 }
 
 export async function runInitCommand(args: InitCommandArgs): Promise<number> {
+  if (args.demo !== undefined) {
+    return runDemoInit(args.demo);
+  }
+  if (args.prompts !== true) {
+    return runAgentInit(args.force ?? false);
+  }
+  return runPromptInit(args);
+}
+
+async function runPromptInit(args: InitCommandArgs): Promise<number> {
   const cwd = process.cwd();
   const provider = args.provider ?? "mock";
   const force = args.force ?? false;

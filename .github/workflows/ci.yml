@@ -177,10 +177,21 @@ jobs:
           npm install --no-audit --no-fund /tmp/pkg/diditbreak-*.tgz
 
           npx diditbreak --version
-          npx diditbreak init
-          npx diditbreak test          # a fresh project must pass first time
+
+          # Prompt suite: a fresh project must pass first time.
+          npx diditbreak init --prompts
+          npx diditbreak test
           npx diditbreak doctor
           npx diditbreak test --json | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{if(JSON.parse(d).pass!==true)process.exit(1)})'
+
+          # Agent experiments, free via the mock agent: the demo's CLAUDE.md
+          # edit contradicts the project, so compare must flag it and exit 1.
+          npx diditbreak init --demo demo
+          cd demo
+          set +e; npx --prefix /tmp/new-user diditbreak compare --agent mock --yes; code=$?; set -e
+          test "$code" -eq 1
+          npx --prefix /tmp/new-user diditbreak report --json | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{const v=JSON.parse(d).summary.comparisons.find(c=>c.variant==="working");if(v.verdict!=="worse")process.exit(1)})'
+          cd ..
 
           # Setup errors must exit 2, distinct from a regression (1).
           mkdir -p /tmp/empty && cd /tmp/empty
